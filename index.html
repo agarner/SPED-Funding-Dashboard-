@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Texas SPED Funding Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --blue:    #1a4f8a;
+      --blue-lt: #2563eb;
+      --blue-bg: #eff6ff;
+      --teal:    #0d7377;
+      --teal-lt: #14a085;
+      --gray:    #374151;
+      --gray-lt: #6b7280;
+      --border:  #d1d5db;
+      --white:   #ffffff;
+      --shadow:  0 1px 4px rgba(0,0,0,.12);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Segoe UI", system-ui, sans-serif;
+      background: #f3f4f6;
+      color: var(--gray);
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    header {
+      background: var(--blue);
+      color: var(--white);
+      padding: 1rem 2rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      box-shadow: 0 2px 6px rgba(0,0,0,.25);
+    }
+    header svg { flex-shrink: 0; }
+    header h1 { font-size: 1.35rem; font-weight: 700; line-height: 1.2; }
+    header p  { font-size: .8rem; opacity: .8; margin-top: .15rem; }
+
+    /* ── Layout ── */
+    main {
+      max-width: 1280px;
+      margin: 2rem auto;
+      padding: 0 1.25rem 3rem;
+      display: grid;
+      gap: 1.5rem;
+    }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--white);
+      border-radius: .75rem;
+      box-shadow: var(--shadow);
+      padding: 1.5rem;
+    }
+    .card-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--blue);
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+    }
+    .card-title::before {
+      content: "";
+      display: block;
+      width: 4px;
+      height: 1.1em;
+      background: var(--blue-lt);
+      border-radius: 2px;
+    }
+
+    /* ── Parameters row ── */
+    .params-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 1rem;
+    }
+    .param-group label {
+      display: block;
+      font-size: .78rem;
+      font-weight: 600;
+      color: var(--gray-lt);
+      margin-bottom: .35rem;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+    .param-group input,
+    .param-group select {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: .4rem;
+      padding: .5rem .75rem;
+      font-size: .95rem;
+      color: var(--gray);
+      background: var(--white);
+      transition: border-color .15s;
+    }
+    .param-group input:focus,
+    .param-group select:focus {
+      outline: none;
+      border-color: var(--blue-lt);
+      box-shadow: 0 0 0 3px rgba(37,99,235,.15);
+    }
+
+    /* ── Arrangements table ── */
+    .table-wrap { overflow-x: auto; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .9rem;
+    }
+    thead th {
+      background: var(--blue-bg);
+      color: var(--blue);
+      font-weight: 700;
+      text-align: left;
+      padding: .6rem .9rem;
+      font-size: .78rem;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+    tbody tr:nth-child(even) { background: #f9fafb; }
+    tbody td {
+      padding: .55rem .9rem;
+      border-bottom: 1px solid #f0f0f0;
+      vertical-align: middle;
+    }
+    tbody td.code   { font-family: monospace; font-size: .8rem; color: var(--gray-lt); }
+    tbody td.weight { font-weight: 600; }
+    tbody td.allot  { font-weight: 600; color: var(--teal); }
+    .students-input {
+      width: 90px;
+      border: 1px solid var(--border);
+      border-radius: .35rem;
+      padding: .3rem .5rem;
+      font-size: .9rem;
+      text-align: right;
+    }
+    .students-input:focus {
+      outline: none;
+      border-color: var(--blue-lt);
+      box-shadow: 0 0 0 2px rgba(37,99,235,.15);
+    }
+
+    /* ── Summary stat boxes ── */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 1rem;
+    }
+    .stat-box {
+      background: var(--white);
+      border-radius: .65rem;
+      padding: 1rem 1.25rem;
+      box-shadow: var(--shadow);
+      border-left: 4px solid var(--blue-lt);
+    }
+    .stat-box.green  { border-color: var(--teal-lt); }
+    .stat-box.orange { border-color: #f59e0b; }
+    .stat-box.purple { border-color: #7c3aed; }
+    .stat-box label {
+      font-size: .72rem;
+      font-weight: 600;
+      color: var(--gray-lt);
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      display: block;
+      margin-bottom: .3rem;
+    }
+    .stat-box .value {
+      font-size: 1.45rem;
+      font-weight: 800;
+      color: var(--gray);
+    }
+    .stat-box .sub {
+      font-size: .75rem;
+      color: var(--gray-lt);
+      margin-top: .1rem;
+    }
+
+    /* ── Charts ── */
+    .charts-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+    @media (max-width: 700px) { .charts-grid { grid-template-columns: 1fr; } }
+    .chart-container { position: relative; height: 300px; }
+
+    /* ── Footer / notes ── */
+    .note {
+      font-size: .78rem;
+      color: var(--gray-lt);
+      background: #f9fafb;
+      border: 1px solid var(--border);
+      border-radius: .5rem;
+      padding: .75rem 1rem;
+      line-height: 1.6;
+    }
+    .note strong { color: var(--gray); }
+
+    /* ── Print ── */
+    @media print {
+      body { background: white; }
+      .no-print { display: none !important; }
+      .card { box-shadow: none; border: 1px solid #ccc; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect width="40" height="40" rx="8" fill="white" fill-opacity=".15"/>
+    <path d="M8 30 L8 16 L16 10 L24 16 L24 12 L32 12 L32 30 Z" stroke="white" stroke-width="2" fill="none"/>
+    <rect x="17" y="22" width="6" height="8" fill="white" fill-opacity=".9"/>
+    <rect x="10" y="20" width="4" height="4" fill="white" fill-opacity=".7"/>
+  </svg>
+  <div>
+    <h1>Texas SPED Funding Dashboard</h1>
+    <p>Foundation School Program · Special Education Allotment Calculator · 2024-25</p>
+  </div>
+  <button class="no-print" onclick="window.print()" style="margin-left:auto;background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.4);color:white;padding:.4rem 1rem;border-radius:.4rem;cursor:pointer;font-size:.85rem;">
+    🖨 Print
+  </button>
+</header>
+
+<main>
+
+  <!-- Parameters -->
+  <div class="card">
+    <div class="card-title">District Parameters</div>
+    <div class="params-grid">
+      <div class="param-group">
+        <label>Basic Allotment ($)</label>
+        <input type="number" id="basicAllotment" value="6160" min="1" step="10" oninput="recalc()">
+      </div>
+      <div class="param-group">
+        <label>District Adjustment Factor</label>
+        <input type="number" id="daf" value="1.0" min="0.5" max="3" step="0.001" oninput="recalc()">
+      </div>
+      <div class="param-group">
+        <label>Fiscal Year</label>
+        <select id="fy" onchange="recalc()">
+          <option value="2024-25" selected>2024-25</option>
+          <option value="2025-26">2025-26</option>
+        </select>
+      </div>
+      <div class="param-group">
+        <label>District Name</label>
+        <input type="text" id="districtName" placeholder="e.g. Austin ISD" oninput="updateTitle()">
+      </div>
+    </div>
+  </div>
+
+  <!-- Summary Stats -->
+  <div class="stats-row" id="statsRow">
+    <div class="stat-box">
+      <label>Total SPED Students</label>
+      <div class="value" id="statStudents">0</div>
+      <div class="sub">Across all arrangements</div>
+    </div>
+    <div class="stat-box green">
+      <label>SPED Allotment</label>
+      <div class="value" id="statAllotment">$0</div>
+      <div class="sub">Before other adjustments</div>
+    </div>
+    <div class="stat-box orange">
+      <label>Weighted ADA</label>
+      <div class="value" id="statWADA">0.00</div>
+      <div class="sub">Sum of students × weight</div>
+    </div>
+    <div class="stat-box purple">
+      <label>Per-Pupil Average</label>
+      <div class="value" id="statPerPupil">$0</div>
+      <div class="sub">Allotment ÷ SPED students</div>
+    </div>
+  </div>
+
+  <!-- Arrangements Table -->
+  <div class="card">
+    <div class="card-title">Instructional Arrangements</div>
+    <div class="table-wrap">
+      <table id="arrangementsTable">
+        <thead>
+          <tr>
+            <th>Code</th>
+            <th>Instructional Arrangement</th>
+            <th style="text-align:right">Weight</th>
+            <th style="text-align:center">Students (ADA)</th>
+            <th style="text-align:right">Weighted ADA</th>
+            <th style="text-align:right">Allotment</th>
+          </tr>
+        </thead>
+        <tbody id="arrangementsBody">
+          <!-- rows injected by JS -->
+        </tbody>
+        <tfoot>
+          <tr style="font-weight:700;background:#f0f4ff">
+            <td colspan="2" style="padding:.6rem .9rem;color:var(--blue)">TOTAL</td>
+            <td></td>
+            <td style="text-align:center;padding:.6rem .9rem" id="footStudents">0</td>
+            <td style="text-align:right;padding:.6rem .9rem" id="footWADA">0.00</td>
+            <td style="text-align:right;padding:.6rem .9rem;color:var(--teal)" id="footAllotment">$0</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+
+  <!-- Charts -->
+  <div class="charts-grid">
+    <div class="card">
+      <div class="card-title">Allotment by Arrangement</div>
+      <div class="chart-container">
+        <canvas id="barChart"></canvas>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Student Distribution</div>
+      <div class="chart-container">
+        <canvas id="pieChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notes -->
+  <div class="note">
+    <strong>Calculation Method:</strong>
+    Allotment for each arrangement = <em>Students (ADA) × Weight × Basic Allotment × District Adjustment Factor</em>.
+    Weights are per <strong>Texas Education Code §48.102</strong> and TEA's Special Education Funding guidance (2024-25).
+    The Basic Allotment of <strong>$6,160</strong> reflects HB 3 / SB 11 legislation; verify with your regional ESC or TEA for the current year.
+    This calculator does not include the High-Cost Services allotment, Extended Year Services, or any federal IDEA-B pass-through funds.
+    <br/><br/>
+    <strong>Instructional arrangement codes</strong> correspond to TEA PEIMS codes.
+    Contact your regional Education Service Center for district-specific adjustments.
+  </div>
+
+</main>
+
+<script>
+  // ── Data ──────────────────────────────────────────────────────────────────
+  const ARRANGEMENTS = [
+    { code: "00",  label: "Mainstream / Regular Class (≤20% pull-out)",    weight: 1.1  },
+    { code: "01",  label: "Speech Therapy – Off Campus",                    weight: 5.0  },
+    { code: "02",  label: "Resource Room (21–49% outside regular class)",   weight: 3.0  },
+    { code: "03",  label: "Self-Contained – Mild/Moderate (50–100%)",       weight: 3.0  },
+    { code: "04",  label: "Self-Contained – Severe",                        weight: 3.0  },
+    { code: "05",  label: "Homebound",                                      weight: 5.0  },
+    { code: "06",  label: "Hospital Class",                                 weight: 3.0  },
+    { code: "07",  label: "Off-Campus (Non-Vocational)",                    weight: 2.7  },
+    { code: "08",  label: "Off-Campus (Vocational)",                        weight: 2.7  },
+    { code: "09",  label: "Residential Care / Treatment Facility",          weight: 4.0  },
+    { code: "10",  label: "DAEP – Special Education",                       weight: 1.7  },
+  ];
+
+  // Palette for charts
+  const PALETTE = [
+    "#2563eb","#16a34a","#dc2626","#9333ea","#ea580c",
+    "#0891b2","#65a30d","#db2777","#7c3aed","#b45309","#047857"
+  ];
+
+  let barChart, pieChart;
+
+  // ── Build table rows ──────────────────────────────────────────────────────
+  function buildTable() {
+    const tbody = document.getElementById("arrangementsBody");
+    tbody.innerHTML = "";
+    ARRANGEMENTS.forEach((arr, i) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td class="code">${arr.code}</td>
+        <td>${arr.label}</td>
+        <td class="weight" style="text-align:right">${arr.weight.toFixed(1)}</td>
+        <td style="text-align:center">
+          <input class="students-input" type="number" id="s${i}" value="0" min="0" step="0.01"
+                 oninput="recalc()" title="Enter student ADA for this arrangement">
+        </td>
+        <td class="weight" style="text-align:right" id="wada${i}">0.00</td>
+        <td class="allot" style="text-align:right" id="allot${i}">$0</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  // ── Core calculation ──────────────────────────────────────────────────────
+  function recalc() {
+    const ba  = parseFloat(document.getElementById("basicAllotment").value) || 0;
+    const daf = parseFloat(document.getElementById("daf").value) || 1;
+
+    let totalStudents = 0, totalWADA = 0, totalAllot = 0;
+    const allotments = [], labels = [], studentCounts = [];
+
+    ARRANGEMENTS.forEach((arr, i) => {
+      const students = parseFloat(document.getElementById(`s${i}`).value) || 0;
+      const wada     = students * arr.weight;
+      const allot    = wada * ba * daf;
+
+      document.getElementById(`wada${i}`).textContent  = wada.toFixed(2);
+      document.getElementById(`allot${i}`).textContent = fmt(allot);
+
+      totalStudents += students;
+      totalWADA     += wada;
+      totalAllot    += allot;
+
+      allotments.push(allot);
+      labels.push(`${arr.code} – ${arr.label.split("(")[0].trim()}`);
+      studentCounts.push(students);
+    });
+
+    // Summary stats
+    document.getElementById("statStudents").textContent  = totalStudents.toLocaleString("en-US", {maximumFractionDigits:1});
+    document.getElementById("statAllotment").textContent = fmt(totalAllot);
+    document.getElementById("statWADA").textContent      = totalWADA.toFixed(2);
+    document.getElementById("statPerPupil").textContent  = totalStudents > 0
+      ? fmt(totalAllot / totalStudents) : "$0";
+
+    // Footer
+    document.getElementById("footStudents").textContent = totalStudents.toLocaleString("en-US", {maximumFractionDigits:1});
+    document.getElementById("footWADA").textContent     = totalWADA.toFixed(2);
+    document.getElementById("footAllotment").textContent = fmt(totalAllot);
+
+    updateCharts(labels, allotments, studentCounts);
+  }
+
+  // ── Charts ────────────────────────────────────────────────────────────────
+  function updateCharts(labels, allotments, students) {
+    const active = ARRANGEMENTS.map((_, i) => i).filter(i => students[i] > 0);
+    const aLabels  = active.map(i => labels[i]);
+    const aAllots  = active.map(i => allotments[i]);
+    const aStuds   = active.map(i => students[i]);
+    const aColors  = active.map(i => PALETTE[i % PALETTE.length]);
+
+    // Bar chart
+    if (barChart) barChart.destroy();
+    barChart = new Chart(document.getElementById("barChart"), {
+      type: "bar",
+      data: {
+        labels: aLabels.length ? aLabels : ["No data"],
+        datasets: [{
+          label: "Allotment ($)",
+          data: aAllots.length ? aAllots : [0],
+          backgroundColor: aColors.length ? aColors : ["#cbd5e1"],
+          borderRadius: 4,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: {
+            ticks: {
+              callback: v => "$" + (v >= 1e6 ? (v/1e6).toFixed(1)+"M" : v >= 1e3 ? (v/1e3).toFixed(0)+"K" : v)
+            }
+          },
+          x: { ticks: { maxRotation: 30, font: { size: 10 } } }
+        }
+      }
+    });
+
+    // Pie chart
+    if (pieChart) pieChart.destroy();
+    pieChart = new Chart(document.getElementById("pieChart"), {
+      type: "doughnut",
+      data: {
+        labels: aLabels.length ? aLabels : ["No students entered"],
+        datasets: [{
+          data: aStuds.length ? aStuds : [1],
+          backgroundColor: aColors.length ? aColors : ["#e2e8f0"],
+          borderWidth: 2,
+          borderColor: "#fff"
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: "right", labels: { boxWidth: 12, font: { size: 10 } } },
+          tooltip: {
+            callbacks: {
+              label: ctx => ` ${ctx.label}: ${ctx.parsed.toLocaleString()} students`
+            }
+          }
+        }
+      }
+    });
+  }
+
+  // ── Helpers ───────────────────────────────────────────────────────────────
+  function fmt(n) {
+    return "$" + n.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+  }
+
+  function updateTitle() {
+    const name = document.getElementById("districtName").value.trim();
+    document.title = name ? `${name} · SPED Funding Dashboard` : "Texas SPED Funding Dashboard";
+  }
+
+  // ── Init ──────────────────────────────────────────────────────────────────
+  buildTable();
+  recalc();
+</script>
+
+</body>
+</html>
