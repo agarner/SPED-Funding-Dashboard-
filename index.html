@@ -4,147 +4,180 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Texas SPED Funding Intelligence</title>
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://unpkg.com/recharts/umd/Recharts.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif; background-color: #f5f5f7; }
-        .glass-card { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(20px); border-radius: 24px; border: 1px solid rgba(0,0,0,0.05); }
-        .apple-shadow { box-shadow: 0 8px 30px rgba(0,0,0,0.04); }
+        body { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif; background-color: #f5f5f7; color: #1d1d1f; }
+        .glass-card { background: white; border-radius: 32px; border: 1px solid rgba(0,0,0,0.08); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.01); transition: all 0.3s ease; }
+        .glass-card:hover { transform: translateY(-2px); box-shadow: 0 20px 40px rgba(0,0,0,0.04); }
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
     </style>
 </head>
-<body>
-    <div id="root"></div>
+<body class="p-4 md:p-10">
+    <div class="max-w-7xl mx-auto space-y-8">
+        
+        <header class="flex flex-col md:flex-row justify-between items-center gap-6 bg-white p-8 rounded-[40px] border border-gray-100 shadow-sm">
+            <div>
+                <h1 class="text-4xl font-extrabold tracking-tight">Funding Intelligence</h1>
+                <p class="text-sm font-semibold text-blue-600 uppercase tracking-widest mt-1">Texas IOS Dashboard • 2026-27 Model</p>
+            </div>
+            <div class="flex items-center gap-6">
+                <div class="text-right px-6 border-r border-gray-100">
+                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">District ADA</label>
+                    <input type="number" id="enrollment" value="1250" oninput="calculate()" class="w-24 font-bold outline-none text-blue-600 text-2xl bg-transparent">
+                </div>
+                <select id="fiscalYear" onchange="calculate()" class="font-bold text-gray-700 outline-none cursor-pointer bg-gray-50 p-3 rounded-2xl text-sm border-none ring-1 ring-gray-100">
+                    <option value="ios">2026-27 (IOS Model)</option>
+                    <option value="old">2025-26 (Old Model)</option>
+                </select>
+            </div>
+        </header>
 
-    <script type="text/babel">
-        const { useState, useMemo } = React;
-        const { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, AreaChart, Area } = Recharts;
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div class="glass-card p-8 border-t-4 border-blue-600">
+                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Total Revenue</p>
+                <h2 id="totalRev" class="text-4xl font-bold">$0</h2>
+            </div>
+            <div class="glass-card p-8 border-t-4 border-green-500">
+                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">FIIE Allotment</p>
+                <h2 id="fiieVal" class="text-4xl font-bold text-green-600">$0</h2>
+            </div>
+            <div class="glass-card p-8 border-t-4 border-blue-400">
+                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Per Student</p>
+                <h2 id="perStudent" class="text-4xl font-bold text-blue-500">$0</h2>
+            </div>
+            <div class="glass-card p-8 border-t-4 border-slate-900 text-center">
+                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Weighted FTE</p>
+                <h2 id="totalFTE" class="text-4xl font-bold text-slate-800">0.0</h2>
+            </div>
+        </div>
 
-        const SpedIntelligenceApp = () => {
-            const [enrollment, setEnrollment] = useState(1250);
-            const [students, setStudents] = useState([
-                { id: 1, name: "Sample Student A", tier: 3, fiie: true },
-                { id: 2, name: "Sample Student B", tier: 1, fiie: false }
-            ]);
-
-            // Full TEA Fiscal Logic
-            const calculations = useMemo(() => {
-                const tierWeights = [1.15, 3.00, 6.00]; // Factor A, B, C
-                const basicAllotment = 6160;
-                
-                const revenueByTier = students.reduce((acc, s) => {
-                    const weight = tierWeights[s.tier - 1] || 1.15;
-                    acc[s.tier] = (acc[s.tier] || 0) + (weight * basicAllotment);
-                    return acc;
-                }, {});
-
-                const fiieTotal = students.filter(s => s.fiie).length * 1000;
-                const totalRev = Object.values(revenueByTier).reduce((a, b) => a + b, 0) + fiieTotal;
-
-                return { totalRev, fiieTotal, revenueByTier };
-            }, [students]);
-
-            const chartData = [
-                { name: 'Tier 1', value: calculations.revenueByTier[1] || 0 },
-                { name: 'Tier 2', value: calculations.revenueByTier[2] || 0 },
-                { name: 'Tier 3', value: calculations.revenueByTier[3] || 0 },
-                { name: 'FIIE', value: calculations.fiieTotal }
-            ];
-
-            return (
-                <div className="max-w-7xl mx-auto p-4 md:p-10 space-y-8">
-                    {/* Apple Style Header */}
-                    <header className="flex flex-col md:flex-row justify-between items-center bg-white p-8 rounded-[32px] apple-shadow border border-gray-100">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <div class="lg:col-span-5 space-y-8">
+                <div class="glass-card p-10">
+                    <h3 class="text-2xl font-bold mb-8 tracking-tight">4-Factor Scoring Rubric</h3>
+                    <div class="space-y-6">
                         <div>
-                            <h1 className="text-4xl font-extrabold tracking-tight text-black">Funding Intelligence</h1>
-                            <p className="text-sm font-semibold text-blue-600 uppercase tracking-[0.2em] mt-1">Texas IOS Dashboard</p>
+                            <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2">Factor A: Tier 1 (1.15x)</label>
+                            <input type="number" id="fa" value="45" oninput="calculate()" class="w-full p-5 bg-gray-50 rounded-[24px] border-none ring-1 ring-gray-100 focus:ring-2 focus:ring-blue-500 font-bold text-xl transition-all">
                         </div>
-                        <div className="flex items-center gap-6 mt-4 md:mt-0">
-                            <div className="text-right">
-                                <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">District ADA</label>
-                                <input 
-                                    type="number" 
-                                    value={enrollment} 
-                                    onChange={(e) => setEnrollment(e.target.value)}
-                                    className="bg-gray-50 border-none rounded-xl px-4 py-2 font-bold text-gray-900 w-24 text-center focus:ring-2 focus:ring-blue-500"
-                                />
-                            </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2">Factor B: Tier 2 (3.00x)</label>
+                            <input type="number" id="fb" value="15" oninput="calculate()" class="w-full p-5 bg-gray-50 rounded-[24px] border-none ring-1 ring-gray-100 focus:ring-2 focus:ring-blue-500 font-bold text-xl transition-all">
                         </div>
-                    </header>
-
-                    {/* KPI Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div className="glass-card p-8 apple-shadow border-t-4 border-blue-500">
-                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Total Estimated Revenue</p>
-                            <h2 className="text-5xl font-bold">${calculations.totalRev.toLocaleString()}</h2>
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-2">Factor C: Intensive (6.00x)</label>
+                            <input type="number" id="fc" value="8" oninput="calculate()" class="w-full p-5 bg-gray-50 rounded-[24px] border-none ring-1 ring-gray-100 focus:ring-2 focus:ring-blue-500 font-bold text-xl transition-all">
                         </div>
-                        <div className="glass-card p-8 apple-shadow border-t-4 border-green-500">
-                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">FIIE Allotment (§48.159)</p>
-                            <h2 className="text-5xl font-bold text-green-600">${calculations.fiieTotal.toLocaleString()}</h2>
-                        </div>
-                        <div className="glass-card p-8 apple-shadow border-t-4 border-slate-900">
-                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2">Rev Per Student (ADA)</p>
-                            <h2 className="text-5xl font-bold text-gray-400">${enrollment > 0 ? Math.round(calculations.totalRev / enrollment).toLocaleString() : 0}</h2>
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-                        {/* Roster Input Panel */}
-                        <div className="lg:col-span-5 glass-card p-8 apple-shadow">
-                            <h3 className="text-xl font-bold mb-6 italic">Add Student to IOS Roster</h3>
-                            <div className="space-y-5">
-                                <input id="n" placeholder="Student Name / ID" className="w-full p-4 bg-gray-50 rounded-2xl border-none ring-1 ring-gray-200 focus:ring-2 focus:ring-blue-500 font-bold" />
-                                <div className="grid grid-cols-2 gap-4">
-                                    <select id="t" className="p-4 bg-gray-50 rounded-2xl border-none ring-1 ring-gray-200 font-bold">
-                                        <option value="1">Tier 1 (1.15x)</option>
-                                        <option value="2">Tier 2 (3.00x)</option>
-                                        <option value="3">Tier 3 (6.00x)</option>
-                                    </select>
-                                    <div className="flex items-center gap-3 bg-green-50 p-4 rounded-2xl ring-1 ring-green-100">
-                                        <input type="checkbox" id="f" className="w-5 h-5 accent-green-600" />
-                                        <label className="text-[10px] font-bold text-green-700 uppercase">FIIE Eval</label>
-                                    </div>
-                                </div>
-                                <button 
-                                    onClick={() => {
-                                        const n = document.getElementById('n').value;
-                                        const t = document.getElementById('t').value;
-                                        const f = document.getElementById('f').checked;
-                                        if(!n) return;
-                                        setStudents([...students, { id: Date.now(), name: n, tier: parseInt(t), fiie: f }]);
-                                        document.getElementById('n').value = '';
-                                    }}
-                                    className="w-full py-5 bg-black text-white rounded-[20px] font-bold hover:scale-[1.02] active:scale-[0.98] transition-all shadow-xl shadow-gray-200"
-                                >
-                                    Commit to Dashboard
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Chart Panel */}
-                        <div className="lg:col-span-7 glass-card p-8 apple-shadow h-[500px]">
-                            <h3 className="text-xl font-bold mb-8">Revenue Distribution</h3>
-                            <ResponsiveContainer width="100%" height="90%">
-                                <BarChart data={chartData}>
-                                    <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 12, fontWeight: 700}} />
-                                    <Tooltip cursor={{fill: 'transparent'}} contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 10px 30px rgba(0,0,0,0.1)'}} />
-                                    <Bar dataKey="value" radius={[10, 10, 10, 10]} barSize={60}>
-                                        {chartData.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={index === 3 ? '#22c55e' : '#3b82f6'} />
-                                        ))}
-                                    </Bar>
-                                </BarChart>
-                            </ResponsiveContainer>
+                        <div class="pt-6 border-t border-gray-100">
+                            <label class="block text-[11px] font-bold text-green-600 uppercase tracking-widest mb-2 italic">Factor D: FIIE Allotment ($1k/eval)</label>
+                            <input type="number" id="fiieCount" value="22" oninput="calculate()" class="w-full p-5 bg-green-50 rounded-[24px] border-none ring-1 ring-green-100 focus:ring-2 focus:ring-green-500 font-bold text-xl text-green-700 transition-all">
                         </div>
                     </div>
                 </div>
-            );
-        };
 
-        const root = ReactDOM.createRoot(document.getElementById("root"));
-        root.render(<SpedIntelligenceApp />);
+                <div class="glass-card p-8">
+                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-6">Revenue Trend (3-Year)</p>
+                    <div class="h-40">
+                        <canvas id="trendChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="lg:col-span-7 space-y-8">
+                <div class="glass-card p-10 min-h-[500px]">
+                    <h3 class="text-2xl font-bold mb-10 tracking-tight text-center">Service Group Distribution</h3>
+                    <div class="h-[400px]">
+                        <canvas id="revChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+                    <div class="glass-card p-4 text-center border-none shadow-sm"><p class="text-[10px] font-bold text-gray-400">SG1</p><p id="sg1" class="font-bold text-blue-600 text-sm">$0</p></div>
+                    <div class="glass-card p-4 text-center border-none shadow-sm"><p class="text-[10px] font-bold text-gray-400">SG2</p><p id="sg2" class="font-bold text-blue-600 text-sm">$0</p></div>
+                    <div class="glass-card p-4 text-center border-none shadow-sm"><p class="text-[10px] font-bold text-gray-400">SG3</p><p id="sg3" class="font-bold text-blue-600 text-sm">$0</p></div>
+                    <div class="glass-card p-4 text-center border-none shadow-sm"><p class="text-[10px] font-bold text-gray-400">SG4</p><p id="sg4" class="font-bold text-blue-600 text-sm">$0</p></div>
+                    <div class="glass-card p-4 text-center border-none shadow-sm"><p class="text-[10px] font-bold text-gray-400">SG5</p><p id="sg5" class="font-bold text-blue-600 text-sm">$0</p></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let mainChart, trendChart;
+        const ba = 6160;
+
+        function calculate() {
+            const enroll = parseFloat(document.getElementById('enrollment').value) || 0;
+            const fa = parseFloat(document.getElementById('fa').value) || 0;
+            const fb = parseFloat(document.getElementById('fb').value) || 0;
+            const fc = parseFloat(document.getElementById('fc').value) || 0;
+            const fiieCount = parseFloat(document.getElementById('fiieCount').value) || 0;
+            const year = document.getElementById('fiscalYear').value;
+
+            const w1 = year === 'ios' ? 1.15 : 1.10;
+            const w2 = year === 'ios' ? 3.00 : 2.30;
+            const w3 = year === 'ios' ? 6.00 : 5.00;
+
+            const totalFTE = (fa * w1) + (fb * w2) + (fc * w3);
+            const coreRev = totalFTE * ba;
+            const fiieRev = fiieCount * 1000;
+            const total = coreRev + fiieRev;
+
+            // UI Update
+            document.getElementById('totalRev').innerText = '$' + Math.round(total).toLocaleString();
+            document.getElementById('fiieVal').innerText = '$' + Math.round(fiieRev).toLocaleString();
+            document.getElementById('totalFTE').innerText = totalFTE.toFixed(1);
+            document.getElementById('perStudent').innerText = enroll > 0 ? '$' + Math.round(total/enroll).toLocaleString() : '$0';
+
+            // SG Projections
+            const sgData = [coreRev*0.4, coreRev*0.25, coreRev*0.15, coreRev*0.12, coreRev*0.08];
+            for(let i=1; i<=5; i++) {
+                document.getElementById('sg'+i).innerText = '$' + Math.round(sgData[i-1]).toLocaleString();
+            }
+
+            updateCharts([...sgData, fiieRev], total);
+        }
+
+        function updateCharts(data, total) {
+            const ctx = document.getElementById('revChart').getContext('2d');
+            if (mainChart) mainChart.destroy();
+            mainChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['SG1', 'SG2', 'SG3', 'SG4', 'SG5', 'FIIE Allotment'],
+                    datasets: [{
+                        data: data,
+                        backgroundColor: ['#0071e3', '#0071e3ee', '#0071e3cc', '#0071e3aa', '#0071e388', '#34c759'],
+                        borderRadius: 20,
+                        barThickness: 50
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
+                    scales: { y: { display: false }, x: { grid: { display: false }, ticks: { font: { weight: 'bold' } } } }
+                }
+            });
+
+            const ttx = document.getElementById('trendChart').getContext('2d');
+            if (trendChart) trendChart.destroy();
+            trendChart = new Chart(ttx, {
+                type: 'line',
+                data: {
+                    labels: ['2024', '2025', '2026'],
+                    datasets: [{
+                        data: [total*0.82, total*0.93, total],
+                        borderColor: '#0071e3',
+                        borderWidth: 5,
+                        tension: 0.4,
+                        pointRadius: 0
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } },
+                    scales: { x: { display: false }, y: { display: false } }
+                }
+            });
+        }
+        window.onload = calculate;
     </script>
 </body>
 </html>
