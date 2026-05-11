@@ -1,0 +1,45 @@
+python3 << 'PYEOF'
+# Build index.html by wrapping the JSX in the HTML shell
+# Convert the React component export to a direct render call for the browser
+
+jsx = open("/mnt/user-data/outputs/SpedFundingDashboard.jsx").read()
+
+# Replace the export default with a direct render
+jsx_browser = jsx.replace(
+    "export default function SpedFundingDashboard()",
+    "function SpedFundingDashboard()"
+)
+
+# Append the render call if not already present
+if "ReactDOM.createRoot" not in jsx_browser:
+    jsx_browser += '\nReactDOM.createRoot(document.getElementById("root")).render(React.createElement(SpedFundingDashboard));\n'
+
+html = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SPED Funding Intelligence — School Tools</title>
+  <meta name="description" content="TEA-aligned SPED funding dashboard..." />
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://unpkg.com/recharts@2.10.3/umd/Recharts.js"></script>
+  ...
+</head>
+<body>
+  <div id="root"></div>
+<script type="text/babel" data-presets="react">
+const {{ useState, useMemo, useRef }} = React;
+const {{ BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer }} = Recharts;
+
+{jsx_browser}
+</script>
+</body>
+</html>"""
+
+with open("/mnt/user-data/outputs/index.html", "w") as f:
+    f.write(html)
+
+print(f"Written: {len(html)} chars")
+PYEOF
