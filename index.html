@@ -1,199 +1,34 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Texas SPED Funding Intelligence</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif; background-color: #f5f5f7; color: #1d1d1f; }
-        .apple-card { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(20px); border-radius: 24px; border: 1px solid rgba(0,0,0,0.05); }
-        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Texas SPED Dashboard</title>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://unpkg.com/recharts/umd/Recharts.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="p-4 md:p-10">
-    <div class="max-w-7xl mx-auto space-y-6">
-        <header class="flex flex-col md:flex-row justify-between items-center gap-4 bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
-            <div>
-                <h1 class="text-3xl font-bold tracking-tight">Funding Intelligence</h1>
-                <p class="text-sm font-medium text-blue-600 uppercase tracking-widest">Intensity of Services (IOS) Dashboard</p>
-            </div>
-            <div class="flex items-center gap-4">
-                <div class="text-right px-4 border-r border-gray-100">
-                    <label class="block text-[10px] font-black text-gray-400 uppercase">District Enrollment</label>
-                    <input type="number" id="enrollment" value="1200" oninput="calculate()" class="w-20 font-bold outline-none text-blue-600 text-lg">
-                </div>
-                <select id="fiscalYear" onchange="calculate()" class="font-bold text-gray-700 outline-none cursor-pointer bg-gray-50 p-2 rounded-xl text-sm">
-                    <option value="ios">2026-27 (IOS Model)</option>
-                    <option value="old">2025-26 (Old Model)</option>
-                </select>
-            </div>
-        </header>
+<body>
+  <div id="root"></div>
 
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div class="apple-card p-6 border-t-4 border-blue-500 text-center">
-                <p class="text-[10px] font-bold text-gray-400 uppercase mb-1">Total Est. Revenue</p>
-                <h2 id="totalRev" class="text-3xl font-bold">$0</h2>
-            </div>
-            <div class="apple-card p-6 border-t-4 border-green-500 text-center">
-                <p class="text-[10px] font-bold text-gray-400 uppercase mb-1">FIIE Allotment (§48.159)</p>
-                <h2 id="fiieVal" class="text-3xl font-bold text-green-600">$0</h2>
-            </div>
-            <div class="apple-card p-6 border-t-4 border-blue-400 text-center">
-                <p class="text-[10px] font-bold text-gray-400 uppercase mb-1">Revenue / Student</p>
-                <h2 id="perStudent" class="text-3xl font-bold text-blue-500">$0</h2>
-            </div>
-            <div class="apple-card p-6 border-t-4 border-slate-400 text-center">
-                <p class="text-[10px] font-bold text-gray-400 uppercase mb-1">Weighted FTE</p>
-                <h2 id="totalFTE" class="text-3xl font-bold text-slate-700">0.0</h2>
-            </div>
-        </div>
+  <script type="text/babel">
+    const { useState, useMemo, useRef, useEffect } = React;
+    const { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, LineChart, Line } = Recharts;
 
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            <div class="lg:col-span-4 space-y-6">
-                <div class="apple-card p-8">
-                    <h3 class="text-lg font-bold mb-6">4-Factor Rubric (Factors A–D)</h3>
-                    <div class="space-y-4">
-                        <div>
-                            <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Factor A: Tier 1 (1.15x)</label>
-                            <input type="number" id="fa" value="45" oninput="calculate()" class="w-full p-4 bg-gray-50 rounded-2xl border-none ring-1 ring-gray-100 focus:ring-2 focus:ring-blue-500 font-bold text-lg">
-                        </div>
-                        <div>
-                            <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Factor B: Tier 2 (3.00x)</label>
-                            <input type="number" id="fb" value="15" oninput="calculate()" class="w-full p-4 bg-gray-50 rounded-2xl border-none ring-1 ring-gray-100 focus:ring-2 focus:ring-blue-500 font-bold text-lg">
-                        </div>
-                        <div>
-                            <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Factor C: Intensive (6.00x)</label>
-                            <input type="number" id="fc" value="5" oninput="calculate()" class="w-full p-4 bg-gray-50 rounded-2xl border-none ring-1 ring-gray-100 focus:ring-2 focus:ring-blue-500 font-bold text-lg">
-                        </div>
-                        <div class="pt-4 border-t border-gray-100">
-                            <label class="block text-[10px] font-bold text-green-600 uppercase mb-1 tracking-widest">Factor D: FIIE Evaluations</label>
-                            <input type="number" id="fiieCount" value="20" oninput="calculate()" class="w-full p-4 bg-green-50 rounded-2xl border-none ring-1 ring-green-100 focus:ring-2 focus:ring-green-500 font-bold text-lg text-green-700">
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="apple-card p-6 h-48">
-                    <p class="text-[10px] font-bold text-gray-400 uppercase mb-4">3-Year Trend Comparison</p>
-                    <canvas id="trendChart"></canvas>
-                </div>
-            </div>
+    /* ══════════════════════════════════════════════════════ */
+    /* PASTE YOUR 2000 LINES OF CODE BELOW THIS LINE         */
+    /* ══════════════════════════════════════════════════════ */
 
-            <div class="lg:col-span-8 space-y-6">
-                <div class="apple-card p-8 min-h-[450px]">
-                    <h3 class="text-xl font-bold mb-8">Service Group Revenue Tracker (SG1–SG5)</h3>
-                    <div class="h-[350px]">
-                        <canvas id="revChart"></canvas>
-                    </div>
-                </div>
+    
+    /* ══════════════════════════════════════════════════════ */
+    /* PASTE YOUR 2000 LINES OF CODE ABOVE THIS LINE         */
+    /* ══════════════════════════════════════════════════════ */
 
-                <div class="grid grid-cols-2 md:grid-cols-5 gap-4 text-center">
-                    <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
-                        <p class="text-[9px] font-bold text-gray-400 uppercase">SG1</p>
-                        <p id="sg1" class="font-bold text-blue-600 text-sm">$0</p>
-                    </div>
-                    <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
-                        <p class="text-[9px] font-bold text-gray-400 uppercase">SG2</p>
-                        <p id="sg2" class="font-bold text-blue-600 text-sm">$0</p>
-                    </div>
-                    <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
-                        <p class="text-[9px] font-bold text-gray-400 uppercase">SG3</p>
-                        <p id="sg3" class="font-bold text-blue-600 text-sm">$0</p>
-                    </div>
-                    <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
-                        <p class="text-[9px] font-bold text-gray-400 uppercase">SG4</p>
-                        <p id="sg4" class="font-bold text-blue-600 text-sm">$0</p>
-                    </div>
-                    <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
-                        <p class="text-[9px] font-bold text-gray-400 uppercase">SG5</p>
-                        <p id="sg5" class="font-bold text-blue-600 text-sm">$0</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        let mainChart, trendChart;
-        const basicAllotment = 6160;
-
-        function calculate() {
-            const enroll = parseFloat(document.getElementById('enrollment').value) || 0;
-            const fa = parseFloat(document.getElementById('fa').value) || 0;
-            const fb = parseFloat(document.getElementById('fb').value) || 0;
-            const fc = parseFloat(document.getElementById('fc').value) || 0;
-            const fiieCount = parseFloat(document.getElementById('fiieCount').value) || 0;
-            const year = document.getElementById('fiscalYear').value;
-
-            // Weights per Model Selection
-            const w1 = year === 'ios' ? 1.15 : 1.10;
-            const w2 = year === 'ios' ? 3.00 : 2.30;
-            const w3 = year === 'ios' ? 6.00 : 5.00;
-
-            const totalFTE = (fa * w1) + (fb * w2) + (fc * w3);
-            const coreRev = totalFTE * basicAllotment;
-            const fiieRev = fiieCount * 1000;
-            const total = coreRev + fiieRev;
-
-            document.getElementById('totalRev').innerText = '$' + Math.round(total).toLocaleString();
-            document.getElementById('fiieVal').innerText = '$' + Math.round(fiieRev).toLocaleString();
-            document.getElementById('totalFTE').innerText = totalFTE.toFixed(1);
-            document.getElementById('perStudent').innerText = enroll > 0 ? '$' + Math.round(total/enroll).toLocaleString() : '$0';
-
-            const sgData = [coreRev*0.4, coreRev*0.25, coreRev*0.15, coreRev*0.12, coreRev*0.08];
-            document.getElementById('sg1').innerText = '$' + Math.round(sgData[0]).toLocaleString();
-            document.getElementById('sg2').innerText = '$' + Math.round(sgData[1]).toLocaleString();
-            document.getElementById('sg3').innerText = '$' + Math.round(sgData[2]).toLocaleString();
-            document.getElementById('sg4').innerText = '$' + Math.round(sgData[3]).toLocaleString();
-            document.getElementById('sg5').innerText = '$' + Math.round(sgData[4]).toLocaleString();
-
-            updateCharts([...sgData, fiieRev], total);
-        }
-
-        function updateCharts(data, total) {
-            const ctx = document.getElementById('revChart').getContext('2d');
-            if (mainChart) mainChart.destroy();
-            mainChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: ['SG 1', 'SG 2', 'SG 3', 'SG 4', 'SG 5', 'FIIE'],
-                    datasets: [{
-                        data: data,
-                        backgroundColor: ['#0071e3', '#0071e3cc', '#0071e399', '#0071e366', '#0071e333', '#34c759'],
-                        borderRadius: 16,
-                        barThickness: 50
-                    }]
-                },
-                options: { 
-                    responsive: true, maintainAspectRatio: false, 
-                    plugins: { legend: { display: false } },
-                    scales: { y: { display: false }, x: { grid: { display: false } } }
-                }
-            });
-
-            const ttx = document.getElementById('trendChart').getContext('2d');
-            if (trendChart) trendChart.destroy();
-            trendChart = new Chart(ttx, {
-                type: 'line',
-                data: {
-                    labels: ['2024', '2025', '2026'],
-                    datasets: [{
-                        data: [total * 0.88, total * 0.94, total],
-                        borderColor: '#0071e3',
-                        borderWidth: 4,
-                        tension: 0.4,
-                        pointRadius: 0
-                    }]
-                },
-                options: { 
-                    responsive: true, maintainAspectRatio: false, 
-                    plugins: { legend: { display: false } },
-                    scales: { x: { display: false }, y: { display: false } }
-                }
-            });
-        }
-        window.onload = calculate;
-    </script>
+    // This final line connects your code to the web page
+    const root = ReactDOM.createRoot(document.getElementById("root"));
+    root.render(<SpedFundingDashboard />);
+  </script>
 </body>
 </html>
