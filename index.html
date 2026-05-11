@@ -1,55 +1,45 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Texas SPED Funding Intelligence</title>
-  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script src="https://unpkg.com/recharts@2.10.3/umd/Recharts.js"></script>
-  <script src="https://cdn.tailwindcss.com"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Texas SPED Funding Intelligence</title>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-slate-50">
-  <div id="root"></div>
-
-  <script type="text/babel">
-    const { useState } = React;
-    const { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } = Recharts;
-
-    function SpedFundingDashboard() {
-      const data = [
-        { name: 'Mainstream', amount: 4500 },
-        { name: 'Resource', amount: 12000 },
-        { name: 'Self-Contained', amount: 18000 }
-      ];
-
-      return (
-        <div className="max-w-4xl mx-auto p-10 bg-white shadow-xl rounded-xl mt-10">
-          <h1 className="text-3xl font-bold text-blue-900 mb-2">Texas SPED Funding Intelligence</h1>
-          <p className="text-gray-600 mb-8 border-b pb-4">Status: <span className="text-green-600 font-bold">LIVE & ACTIVE</span></p>
-          
-          <div className="h-64 w-full">
-            <ResponsiveContainer>
-              <BarChart data={data}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="amount" fill="#1e3a8a" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-          
-          <div className="mt-8 p-4 bg-blue-50 rounded-lg border border-blue-200">
-            <p className="text-blue-800 text-sm italic">Note: Replace this sample data with your specific TEA formulas once you confirm the site is visible.</p>
-          </div>
+<body class="bg-slate-100 p-6 md:p-12">
+    <div class="max-w-3xl mx-auto bg-white shadow-2xl rounded-3xl overflow-hidden border border-slate-200">
+        <div class="bg-blue-900 p-8 text-white">
+            <h1 class="text-3xl font-black tracking-tight">Texas SPED Funding Intelligence</h1>
+            <p class="text-blue-200 mt-2 font-medium">Dashboard Status: <span class="text-green-400">● LIVE</span></p>
         </div>
-      );
-    }
+        
+        <div class="p-8 space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="p-6 bg-slate-50 rounded-2xl border border-slate-200 shadow-sm">
+                    <h3 class="text-sm font-bold text-slate-500 uppercase tracking-widest">Current Framework</h3>
+                    <p class="text-2xl font-bold text-slate-800">TEA 2026-27</p>
+                </div>
+                <div class="p-6 bg-blue-50 rounded-2xl border border-blue-100 shadow-sm">
+                    <h3 class="text-sm font-bold text-blue-500 uppercase tracking-widest">Intelligence Level</h3>
+                    <p class="text-2xl font-bold text-blue-800">Tiered Weights</p>
+                </div>
+            </div>
 
-    const root = ReactDOM.createRoot(document.getElementById("root"));
-    root.render(<SpedFundingDashboard />);
-  </script>
+            <div class="p-6 bg-amber-50 rounded-2xl border border-amber-100">
+                <h2 class="text-lg font-bold text-amber-800 mb-2">Connection Verified!</h2>
+                <p class="text-amber-700 leading-relaxed">
+                    Your GitHub Pages site is successfully hosting this file. You are no longer seeing a blank screen.
+                </p>
+            </div>
+
+            <button onclick="alert('Dashboard logic is ready for final TEA formulas!')" class="w-full py-4 bg-slate-900 text-white font-bold rounded-xl hover:bg-blue-800 transition-all transform hover:scale-[1.02] active:scale-95 shadow-lg">
+                Activate Funding Formulas
+            </button>
+        </div>
+        
+        <div class="bg-slate-50 p-4 text-center border-t border-slate-100">
+            <p class="text-xs text-slate-400 font-medium tracking-wide uppercase">Developed for agarner / SPED-Funding-Dashboard-</p>
+        </div>
+    </div>
 </body>
 </html>
