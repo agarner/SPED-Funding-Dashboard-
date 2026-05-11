@@ -1,1513 +1,199 @@
-import { useState, useMemo, useRef } from "react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-
-/* ─── APPLE DESIGN TOKENS ─── */
-const BG       = "#F5F5F7";
-const WHITE    = "#FFFFFF";
-const LABEL    = "#1D1D1F";
-const SECONDARY= "#6E6E73";
-const TERTIARY = "#AEAEB2";
-const SEP      = "#D2D2D7";
-const BLUE     = "#0071E3";
-const BLUE_LT  = "#E8F1FB";
-const GREEN    = "#28CD41";
-const ORANGE   = "#FF9F0A";
-const RED      = "#FF3B30";
-const RED_LT   = "#FFF0EE";
-const TEAL     = "#32ADE6";
-const TEAL_LT  = "#E5F4FC";
-const INDIGO   = "#5856D6";
-const GLASS    = "rgba(255,255,255,0.72)";
-
-const TIER_COLORS = ["#32ADE6","#34AADC","#30B0C7","#5856D6","#AF52DE","#FF375F","#FF3B30","#FF2D55"];
-const TIER_LABELS = ["Speech Only","Tier 2","Tier 3","Tier 4","Tier 5","Tier 6","Tier 7","Residential"];
-const SERVICE_GROUPS = ["None","SG1 — Related Svcs Low","SG2 — Related Svcs Mod","SG3 — Related Svcs High","SG4 — 1:1 Ratio ≥50%","SG5 — 1:1 Intensive"];
-const DOMAIN_NAMES = ["Curriculum & Instruction","Behavior","Communication","Independent Functioning","Personal Care/Health"];
-const DOMAIN_COLORS = [TEAL, RED, INDIGO, ORANGE, GREEN];
-const DOMAIN_SHORT = ["C&I","Beh","Comm","Indep","PC/H"];
-
-/* ─── TEA FACTOR DEFINITIONS (exact rubric) ─── */
-const FACTOR_LABELS = ["A — Type/Nature/Frequency","B — Provider Credentials","C — Ratio Required","D — Equipment/Technology"];
-
-const SCORE_OPTIONS = [
-  { val:0, label:"0 — No Support Required" },
-  { val:1, label:"1 — Minimum" },
-  { val:2, label:"2 — Moderate" },
-  { val:3, label:"3 — Significant" },
-];
-
-// TEA rubric descriptions per domain per factor per score level
-const TEA_RUBRIC = {
-  // Domain 0: Curriculum & Instruction
-  0: {
-    A: {
-      0: "No direct academic SPED services required for FAPE; accommodations require little staff effort/monitoring.",
-      1: "Targeted, limited SDI addressing specific needs. Typically ≥1 academic goal; direct SDI likely 1–5 hrs/week per core subject.",
-      2: "SDI necessary for consistent access; delivered multiple times/week across settings. Multiple academic goals. Indirect services require planning/coordination.",
-      3: "Intensive, frequent, pervasive SDI substantially structuring participation throughout the day. Daily intensive SDI in all core subjects.",
-    },
-    B: {
-      0: "No specialized qualifications required for FAPE.",
-      1: "SDI delivered by SPED teacher, paraprofessional w/ oversight, or gen-ed teacher w/ SPED support. Typical expertise sufficient.",
-      2: "SPED teacher or other SPED professional required, including dyslexia provider (not required to be advanced level). Planned coaching/consultation needed.",
-      3: "Advanced-level dyslexia practitioner required, OR highly individualized instructional design/specialized methodologies essential; without expertise, progress would be significantly compromised.",
-    },
-    C: {
-      0: "No reduced ratio required for FAPE.",
-      1: "Reduced ratio intermittently required during certain instructional blocks or tasks.",
-      2: "Planned reduced ratio required during specific blocks/tasks; must be intentional and reliable. Dyslexia program fidelity group size required.",
-      3: "Highly restrictive or near-continuous ratio required; instruction cannot be delivered with fidelity without individualized staffing across most of the day.",
-    },
-    D: {
-      0: "Standard materials; no special technology or equipment required for FAPE.",
-      1: "AT or adapted materials documented in IEP; used independently or with little staff support; minimal prep time.",
-      2: "AT/equipment routinely required; used consistently; requires individualized setup and predictable staff training.",
-      3: "AT/equipment foundational; student cannot access instruction without it; highly individualized; requires continuous staff facilitation.",
-    },
-  },
-  // Domain 1: Behavior
-  1: {
-    A: {
-      0: "No direct behavior SPED services required for FAPE; behavioral accommodations require little staff effort/monitoring.",
-      1: "Targeted, limited SDI for specific needs. Typically <60 min/week. ≥1 functional behavior goal. Supports supplemental.",
-      2: "SDI delivered multiple times/week across routines; typically 1–5 hrs/week. Multiple behavior goals. BIP present; primarily preventive/instructional.",
-      3: "Intensive, pervasive behavior SDI structuring participation throughout the day. BIP required. Daily/near-continuous; frequently reactive, safety-driven, or crisis-oriented.",
-    },
-    B: {
-      0: "No specialized qualifications required for FAPE.",
-      1: "Behavioral supports implementable by typically qualified staff with routine training. Straightforward plans.",
-      2: "Adults with targeted behavioral competencies required (BCBA, behavior specialist, school psychologist, counselor, or social worker). Periodic coaching to sustain implementation.",
-      3: "Highly specialized behavioral expertise essential for safe/effective implementation; advanced judgment, frequent plan redesign, complex coordination. Must handle crisis/emergency response.",
-    },
-    C: {
-      0: "No reduced ratio required for FAPE.",
-      1: "Reduced ratio intermittently required; behavioral supports typically shared through classroom routines.",
-      2: "Planned reduced ratio during specific times/settings (e.g., transitions, unstructured times); must be reliable; staff presence regular but not continuous.",
-      3: "Highly restrictive or near-continuous ratio required for safety and sustained participation; frequent intervention and immediate response capability needed.",
-    },
-    D: {
-      0: "Standard materials; no special technology or equipment required for FAPE.",
-      1: "Tools used intermittently; simple/low-tech; minimal training. E.g., visual schedules, behavior charts, noise-canceling headphones.",
-      2: "Tools used regularly across day/settings; require predictable training and monitoring. E.g., behavior-tracking technology, self-monitoring apps, sensory tools.",
-      3: "Tools foundational to student's ability to regulate behavior, remain safe, and participate; highly individualized; require ongoing staff facilitation. E.g., specialized technology, integrated safety systems, AAC for behavior prevention.",
-    },
-  },
-  // Domain 2: Communication
-  2: {
-    A: {
-      0: "No direct communication SPED services required for FAPE; accommodations require little staff effort/monitoring.",
-      1: "Targeted, limited SDI for specific needs. Typically <60 min/week. ≥1 communication goal.",
-      2: "SDI delivered multiple times/week across routines; typically 1–5 hrs/week. Multiple communication goals. Student may use AAC independently or with minimal support.",
-      3: "Intensive, pervasive communication SDI structuring participation throughout the day. Student requires ongoing/pervasive staff support for AAC or communication. Communication needs significantly structure daily participation.",
-    },
-    B: {
-      0: "No specialized qualifications required for FAPE.",
-      1: "Communication supports implementable by typically qualified staff with routine training.",
-      2: "SLPA supervised by licensed SLP, or licensed SLP required to implement communication services effectively.",
-      3: "Highly specialized expertise required (AAC specialist, ASL interpreter, DB intervener, AT specialist) in addition to licensed SLP. Complex AAC systems require expert oversight.",
-    },
-    C: {
-      0: "No reduced ratio required for FAPE.",
-      1: "Reduced ratio intermittently required; supports typically through classroom routines.",
-      2: "Planned reduced ratio at specific times/activities for effective communication; regular partner facilitation but student has periods of independence.",
-      3: "Near-continuous ratio (effectively 1:1 communication partner) across most/all of the day; without it student cannot reliably communicate or participate.",
-    },
-    D: {
-      0: "Standard materials; no special technology or equipment required for FAPE.",
-      1: "Equipment supplements communication; student can demonstrate functional communication without it. Minimal training required.",
-      2: "Equipment/technology routinely required across significant portions of the day; predictable training and support needed. E.g., AAC systems with emerging independence, speech-generating devices.",
-      3: "Equipment/technology foundational — primary means of communication; without it student cannot meaningfully communicate. Highly individualized; requires intensive training and constant staff facilitation.",
-    },
-  },
-  // Domain 3: Independent Functioning
-  3: {
-    A: {
-      0: "No direct independent functioning SPED services required for FAPE; accommodations require little staff effort/monitoring.",
-      1: "Targeted, limited SDI for specific needs. Typically <60 min/week. ≥1 independent functioning/executive functioning/self-management goal.",
-      2: "SDI delivered multiple times/week; typically 1–5 hrs/week. Multiple IF goals. Services regular but do not dominate the day; build independence rather than replace it.",
-      3: "Intensive, pervasive IF SDI substantially structuring participation throughout the day. Services daily/near-continuous; student requires ongoing prompting, modeling, and scaffolding across most routines.",
-    },
-    B: {
-      0: "No specialized qualifications required for FAPE.",
-      1: "IF supports implementable by typically qualified staff with routine training.",
-      2: "Personnel with specific training/documented competencies (not advanced licensure) required; student-specific and tied to identified needs.",
-      3: "Highly specialized expertise required (O&M, TVI, TODHH, DB intervener); significant professional judgment needed to design and adjust supports.",
-    },
-    C: {
-      0: "No reduced ratio required for FAPE.",
-      1: "Reduced ratio intermittently required; supports typically shared across students.",
-      2: "Planned reduced ratio at specific times/settings to maintain functional independence; must be intentional and reliable.",
-      3: "Near-continuous dedicated staff presence required; ratio needs may define placement, schedule, or participation opportunities.",
-    },
-    D: {
-      0: "Standard materials; no special technology or equipment required for FAPE.",
-      1: "Equipment supplemental; student can manage some routines without it. Minimal training required. E.g., visual schedules, timers, basic self-monitoring tools.",
-      2: "Equipment routinely required for daily routines, transitions, and organization; consistent implementation required. E.g., digital schedules, task analysis systems, self-regulation apps.",
-      3: "Equipment foundational; student cannot initiate, transition, or organize without it; ongoing staff facilitation required. E.g., integrated day-structuring systems, continuous supports requiring constant monitoring.",
-    },
-  },
-  // Domain 4: Personal Care/Health
-  4: {
-    A: {
-      0: "No direct personal care/health SPED services required for FAPE; accommodations require little staff effort/monitoring.",
-      1: "Targeted, limited SDI for specific needs. Typically <60 min/week. ≥1 functional PC/H goal. Services schedulable without disruption.",
-      2: "SDI delivered multiple times/week; typically 1–5 hrs/week. Multiple PC/H goals. Regular monitoring/assistance required; needs stable but consistent.",
-      3: "Intensive, pervasive PC/H SDI substantially structuring participation throughout the day. Services daily/near-continuous. Health/safety risks if services reduced or delayed.",
-    },
-    B: {
-      0: "No specialized qualifications required for FAPE.",
-      1: "PC/H supports do not require specialized certifications beyond typical school-based training.",
-      2: "Personnel with specific training/credentials (not continuous clinical licensure) required. Periodic clinical oversight/consultation needed.",
-      3: "Advanced certifications/licensure required; without expertise, services cannot be safely provided. Continuous/frequent clinical judgment necessary.",
-    },
-    C: {
-      0: "No reduced ratio required for FAPE.",
-      1: "Reduced ratio intermittently required; no continuous/dedicated staff presence needed.",
-      2: "Planned reduced ratio for portions of the day/specific activities; must be intentional and reliable. Tied to health, mobility, or personal care needs.",
-      3: "Near-continuous dedicated ratio required to attend school safely; student cannot function safely without continuous supervision or assistance.",
-    },
-    D: {
-      0: "Standard materials; no special technology or equipment required for FAPE.",
-      1: "Equipment used intermittently/situationally; minimal training required. E.g., occasional mobility aids, simple health supports.",
-      2: "Equipment routinely required for safety/health/physical access; daily or across multiple settings; predictable staff monitoring. E.g., daily mobility equipment, health monitoring devices.",
-      3: "Equipment foundational and essential for safe school attendance; without it significant health/safety risk. Requires intensive training and continuous monitoring. E.g., complex mobility systems, continuous medical monitoring.",
-    },
-  },
-};
-
-/* ─── TEA TIER CALCULATION (exact logic from TEA framework) ─── */
-// Domain score = highest factor score (TEA uses "highest factor wins" rule)
-function domainScore(factors) {
-  return Math.max(...factors);
-}
-
-function calcTierFromFactors(allFactors, override) {
-  // Override logic
-  if (override === "speech") return 1;
-  if (override === "day")    return 7;
-  if (override === "residential") return 8;
-
-  // Each domain: highest factor wins
-  const d = allFactors.map(f => domainScore(f));
-
-  // Speech-only check: only domain 2 (Communication) has any score, rest = 0
-  const nonCommSum = d[0]+d[1]+d[3]+d[4];
-  if (nonCommSum === 0 && d[2] > 0) return 1;
-
-  const sum = d.reduce((a,b)=>a+b,0);
-  if (sum === 0) return 1;
-
-  // TEA special conditions for T6/T7
-  const significantCount = d.filter(v=>v===3).length;
-  const moderateCount    = d.filter(v=>v===2).length;
-  if (significantCount === 5) return 7; // all 5 significant
-  if (significantCount === 4 && moderateCount >= 1) return 6; // 4 sig + 1 mod
-
-  // Standard composite mapping
-  if (sum <= 2)  return 2;
-  if (sum <= 4)  return 3;
-  if (sum <= 6)  return 4;
-  if (sum <= 8)  return 5;
-  if (sum <= 10) return 6;
-  return 7;
-}
-
-/* ─── SERVICE GROUP CALCULATION ─── */
-function calcServiceGroups(relatedMins6wk, hasTransport, hasParentCounseling, ratio1to1Pct) {
-  let sg13 = 0;
-  if (relatedMins6wk >= 540) sg13 = 3;
-  else if (relatedMins6wk >= 270) sg13 = 2;
-  else if (relatedMins6wk >= 180 || hasTransport || hasParentCounseling) sg13 = 1;
-
-  let sg45 = 0;
-  if (ratio1to1Pct >= 80) sg45 = 5;
-  else if (ratio1to1Pct >= 50) sg45 = 4;
-
-  return { sg13, sg45 };
-}
-
-/* ─── BLANK STUDENT FORM STATE ─── */
-const blankFactors = () => [[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0],[0,0,0,0]];
-const blankForm = () => ({
-  id:"", name:"", override:"none",
-  factors: blankFactors(),
-  relatedMins:"0", hasTransport:false, hasParentCounseling:false, ratio1to1:"0",
-});
-
-/* ─── FUNDING / COMPLIANCE DATA ─── */
-const fundingComparison = [
-  { year:"FY25 (Old)", amount:1840000 },
-  { year:"FY26 Proj.", amount:1920000 },
-  { year:"FY27 Est.",  amount:2140000 },
-];
-const complianceDates = [
-  { date:"Aug 14, 2026", task:"Voluntary data upload to TEA (secure link)", urgent:true },
-  { date:"Sep 1, 2026",  task:"ARD committee IEP documentation review complete", urgent:true },
-  { date:"Oct 1, 2026",  task:"TEA attendance projections due to LBB", urgent:false },
-  { date:"Oct 8, 2026",  task:"1st PEIMS Attendance Submission — Tiers & Service Groups due", urgent:true },
-  { date:"Oct 25, 2026", task:"PEIMS Fall Submission (standard)", urgent:false },
-  { date:"Jun 2027",     task:"PEIMS Summer Submission — corrections window", urgent:false },
-  { date:"FY2027–28",    task:"Old instructional arrangement codes retired", urgent:false },
-];
-
-const fmt = n => n>=1000000?`$${(n/1e6).toFixed(2)}M`:`$${(n/1000).toFixed(0)}K`;
-
-/* ─── CSV PARSER (updated for factor columns) ─── */
-function parseCSV(text) {
-  const lines = text.trim().split("\n");
-  if (lines.length<2) return { students:[], errors:["CSV needs a header row and at least one data row."] };
-  const errors=[],students=[];
-  const header=lines[0].toLowerCase().replace(/\r/g,"").split(",").map(h=>h.trim());
-  const idIdx  =header.findIndex(h=>h==="studentid"||h==="id");
-  const nameIdx=header.findIndex(h=>h.includes("name"));
-  const tierIdx=header.findIndex(h=>h==="tier");
-
-  // Factor columns: d1a, d1b, d1c, d1d ... d5d
-  const factorIdxs = Array.from({length:5},(_,di)=>
-    [0,1,2,3].map(fi=>{
-      const key = `d${di+1}${"abcd"[fi]}`;
-      return header.findIndex(h=>h===key);
-    })
-  );
-  // Legacy domain columns
-  const domIdxs=[0,1,2,3,4].map(n=>header.findIndex(h=>h===`domain${n+1}`||h===`d${n+1}`));
-  const sgIdx=header.findIndex(h=>h.includes("servicegroup")||h==="sg");
-
-  lines.slice(1).forEach((line,i)=>{
-    if(!line.trim())return;
-    const cols=line.replace(/\r/g,"").split(",").map(c=>c.trim());
-
-    // Build factors: prefer factor columns, fall back to legacy domain (sets Factor A only)
-    const factors = Array.from({length:5},(_,di)=>{
-      const fv = factorIdxs[di].map(fi=>{
-        if(fi<0)return -1;
-        const v=parseInt(cols[fi],10);
-        return isNaN(v)?-1:Math.min(3,Math.max(0,v));
-      });
-      if(fv.some(v=>v>=0)) return fv.map(v=>v<0?0:v);
-      // Fall back to legacy domain column → sets all 4 factors equal
-      const li=domIdxs[di];
-      if(li>=0){const v=parseInt(cols[li],10);const s=isNaN(v)?0:Math.min(3,Math.max(0,v));return[s,s,s,s];}
-      return [0,0,0,0];
-    });
-
-    // Tier: explicit or computed
-    let tier;
-    if(tierIdx>=0&&cols[tierIdx]){
-      tier=parseInt(cols[tierIdx],10);
-      if(isNaN(tier)||tier<1||tier>8){errors.push(`Row ${i+2}: Invalid tier "${cols[tierIdx]}"`);return;}
-    } else {
-      tier=calcTierFromFactors(factors,"none");
-    }
-
-    const sgRaw=sgIdx>=0?parseInt(cols[sgIdx],10):0;
-    students.push({
-      id:idIdx>=0?cols[idIdx]||`STU${i+1}`:`STU${i+1}`,
-      name:nameIdx>=0?cols[nameIdx]||"":"",
-      tier, factors, override:"none",
-      sg:isNaN(sgRaw)?0:Math.min(5,Math.max(0,sgRaw)),
-    });
-  });
-  return {students,errors};
-}
-
-/* ─── TOOLTIP ─── */
-const Tip=({active,payload,label})=>{
-  if(!active||!payload?.length)return null;
-  return(
-    <div style={{background:GLASS,backdropFilter:"blur(20px)",WebkitBackdropFilter:"blur(20px)",border:`1px solid ${SEP}`,borderRadius:12,padding:"10px 14px",fontFamily:"-apple-system,sans-serif",fontSize:12,color:LABEL,boxShadow:"0 8px 32px rgba(0,0,0,.12)"}}>
-      <div style={{fontSize:11,color:SECONDARY,marginBottom:5}}>{label}</div>
-      {payload.map((p,i)=>(
-        <div key={i} style={{display:"flex",alignItems:"center",gap:7}}>
-          <div style={{width:7,height:7,borderRadius:"50%",background:p.fill||p.color}}/>
-          <span style={{fontWeight:600}}>{typeof p.value==="number"&&p.value>1000?fmt(p.value):p.value}</span>
-        </div>
-      ))}
-    </div>
-  );
-};
-
-/* ─── PRO OVERLAY ─── */
-const ProOverlay=({title,desc})=>(
-  <div style={{position:"absolute",inset:0,background:"rgba(245,245,247,0.88)",backdropFilter:"blur(20px)",WebkitBackdropFilter:"blur(20px)",zIndex:10,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:12,borderRadius:16}}>
-    <div style={{width:44,height:44,borderRadius:"50%",background:LABEL,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18}}>🔒</div>
-    <div style={{fontFamily:"-apple-system,sans-serif",fontSize:18,fontWeight:600,color:LABEL,letterSpacing:"-.4px"}}>{title}</div>
-    <div style={{fontSize:13,color:SECONDARY,textAlign:"center",maxWidth:260,lineHeight:1.5}}>{desc}</div>
-    <button style={{background:BLUE,color:WHITE,fontFamily:"-apple-system,sans-serif",fontSize:13,fontWeight:600,padding:"9px 22px",border:"none",borderRadius:980,cursor:"pointer"}}>
-      Unlock School Tools Pro
-    </button>
-  </div>
-);
-
-/* ─── CSS ─── */
-const css=`
-*{box-sizing:border-box;margin:0;padding:0}
-html{-webkit-font-smoothing:antialiased}
-body{background:${BG};font-family:-apple-system,'Helvetica Neue',sans-serif;color:${LABEL}}
-.apple-nav{background:${GLASS};backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid ${SEP};position:sticky;top:0;z-index:200}
-.nav-inner{max-width:1200px;margin:0 auto;padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:52px;gap:20px}
-.nav-logo{font-size:17px;font-weight:600;color:${LABEL};letter-spacing:-.4px;display:flex;align-items:center;gap:8px;text-decoration:none}
-.nav-logo-icon{width:28px;height:28px;border-radius:7px;background:linear-gradient(135deg,${TEAL} 0%,${INDIGO} 100%);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
-.nav-link{font-size:12px;color:${SECONDARY};padding:6px 14px;border-radius:980px;transition:all .15s;background:none;border:none;font-family:inherit;letter-spacing:-.1px;text-decoration:none;display:inline-block}
-.nav-link:hover{color:${LABEL};background:rgba(0,0,0,.04)}
-.nav-cta{background:${BLUE};color:${WHITE};font-size:12px;font-weight:500;padding:6px 16px;border-radius:980px;border:none;cursor:pointer;font-family:inherit;text-decoration:none;display:inline-block;transition:opacity .15s}
-.nav-cta:hover{opacity:.85}
-.hero{background:linear-gradient(180deg,${WHITE} 0%,${BG} 100%);border-bottom:1px solid ${SEP};padding:32px 24px 28px}
-.hero-inner{max-width:1200px;margin:0 auto}
-.hero-eyebrow{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:${BLUE};margin-bottom:6px}
-.hero-title{font-size:28px;font-weight:700;color:${LABEL};letter-spacing:-.7px;margin-bottom:4px;line-height:1.2}
-.hero-sub{font-size:15px;color:${SECONDARY};letter-spacing:-.2px;margin-bottom:20px}
-.hero-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.meta-chip{display:inline-flex;align-items:center;gap:5px;background:${WHITE};border:1px solid ${SEP};border-radius:980px;padding:4px 12px;font-size:12px;color:${SECONDARY}}
-.meta-chip strong{color:${LABEL};font-weight:600}
-.alert-chip{display:inline-flex;align-items:center;gap:5px;background:${RED_LT};border:1px solid rgba(255,59,48,.2);border-radius:980px;padding:4px 12px;font-size:12px;color:${RED};font-weight:500;animation:softpulse 2.4s ease-in-out infinite}
-@keyframes softpulse{0%,100%{opacity:1}50%{opacity:.6}}
-.teal-chip{display:inline-flex;align-items:center;gap:5px;background:${TEAL_LT};border:1px solid rgba(50,173,230,.2);border-radius:980px;padding:4px 12px;font-size:12px;color:${TEAL};font-weight:500}
-.tab-bar{background:${WHITE};border-bottom:1px solid ${SEP};padding:0 24px}
-.tab-bar-inner{max-width:1200px;margin:0 auto;display:flex}
-.tab-btn{font-size:13px;font-weight:500;color:${SECONDARY};padding:12px 18px;border:none;background:none;cursor:pointer;font-family:inherit;letter-spacing:-.1px;border-bottom:2px solid transparent;transition:all .15s;margin-bottom:-1px}
-.tab-btn:hover{color:${LABEL}}
-.tab-btn.active{color:${BLUE};border-bottom-color:${BLUE}}
-.tab-count{display:inline-flex;align-items:center;justify-content:center;background:${BLUE};color:${WHITE};font-size:10px;font-weight:600;min-width:18px;height:18px;border-radius:9px;padding:0 5px;margin-left:6px}
-.main{max-width:1200px;margin:0 auto;padding:28px 24px}
-.sec-hdr{margin:0 0 16px}
-.sec-title{font-size:20px;font-weight:600;color:${LABEL};letter-spacing:-.5px;margin-bottom:2px}
-.sec-sub{font-size:13px;color:${SECONDARY};letter-spacing:-.1px}
-.card{background:${WHITE};border:1px solid ${SEP};border-radius:16px;padding:22px;margin-bottom:4px;transition:box-shadow .2s}
-.card:hover{box-shadow:0 4px 24px rgba(0,0,0,.06)}
-.card-title{font-size:16px;font-weight:600;color:${LABEL};letter-spacing:-.3px;margin-bottom:2px}
-.card-sub{font-size:12px;color:${SECONDARY};margin-bottom:16px}
-.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
-.kpi{background:${WHITE};border:1px solid ${SEP};border-radius:16px;padding:18px 20px;transition:box-shadow .2s}
-.kpi:hover{box-shadow:0 4px 20px rgba(0,0,0,.07)}
-.kpi-icon{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px;margin-bottom:12px}
-.kpi-lbl{font-size:11px;font-weight:500;color:${SECONDARY};margin-bottom:6px}
-.kpi-val{font-size:26px;font-weight:700;color:${LABEL};letter-spacing:-.8px;line-height:1;margin-bottom:5px}
-.kpi-delta{font-size:11px;color:${SECONDARY}}
-.kpi-delta.up{color:#1C8C45}.kpi-delta.dn{color:${RED}}.kpi-delta.neu{color:${SECONDARY}}
-.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-.g3r{display:grid;grid-template-columns:1fr 1.6fr;gap:14px}
-.tier-list{display:flex;flex-direction:column;gap:5px}
-.tier-row{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;transition:background .12s}
-.tier-row:hover{background:rgba(0,0,0,.03)}
-.tier-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-.tier-name{font-size:13px;color:${LABEL};flex:0 0 160px}
-.tier-bar-wrap{flex:1;height:4px;background:${SEP};border-radius:2px;overflow:hidden}
-.tier-bar-fill{height:4px;border-radius:2px;transition:width .4s ease}
-.tier-count{font-size:13px;font-weight:600;color:${LABEL};width:28px;text-align:right}
-.tier-pct{font-size:11px;color:${TERTIARY};width:38px;text-align:right}
-.comp-list{list-style:none}
-.comp-item{display:flex;align-items:flex-start;gap:12px;padding:11px 0;border-bottom:1px solid ${SEP}}
-.comp-item:last-child{border-bottom:none}
-.comp-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:4px}
-.comp-date{font-size:11px;color:${TERTIARY};width:90px;flex-shrink:0;margin-top:1px}
-.comp-task{font-size:13px;color:${LABEL};flex:1;line-height:1.45}
-.comp-urgent-tag{font-size:10px;font-weight:600;padding:2px 8px;border-radius:5px;background:${RED_LT};color:${RED};flex-shrink:0}
-.pt{width:100%;border-collapse:collapse}
-.pt th{font-size:11px;font-weight:600;color:${SECONDARY};padding:8px 12px;text-align:left;border-bottom:1px solid ${SEP}}
-.pt td{font-size:13px;color:${LABEL};padding:10px 12px;border-bottom:1px solid ${SEP}}
-.pt tr:last-child td{border-bottom:none}
-.pt tr:hover td{background:rgba(0,0,0,.02)}
-.tag{display:inline-block;padding:2px 9px;border-radius:5px;font-size:11px;font-weight:600}
-.tag-new{background:${TEAL_LT};color:${TEAL}}
-.tag-cont{background:rgba(255,159,10,.1);color:${ORANGE}}
-.stu-form{background:${WHITE};border:1px solid ${SEP};border-radius:16px;padding:22px;margin-bottom:14px}
-.field-label{font-size:11px;font-weight:600;color:${SECONDARY};margin-bottom:5px;display:block}
-.field-input{width:100%;background:${BG};border:1px solid ${SEP};border-radius:9px;padding:9px 12px;font-family:inherit;font-size:13px;color:${LABEL};outline:none;transition:border-color .15s,box-shadow .15s}
-.field-input:focus{border-color:${BLUE};box-shadow:0 0 0 3px rgba(0,113,227,.12);background:${WHITE}}
-.field-select{width:100%;background:${BG};border:1px solid ${SEP};border-radius:9px;padding:9px 12px;font-family:inherit;font-size:13px;color:${LABEL};outline:none;cursor:pointer;-webkit-appearance:none;transition:border-color .15s,box-shadow .15s}
-.field-select:focus{border-color:${BLUE};box-shadow:0 0 0 3px rgba(0,113,227,.12);background:${WHITE}}
-.add-btn{background:${BLUE};color:${WHITE};font-family:inherit;font-size:13px;font-weight:600;padding:10px 22px;border:none;border-radius:9px;cursor:pointer;transition:opacity .15s;width:100%}
-.add-btn:hover{opacity:.85}
-.csv-zone{border:1.5px dashed ${SEP};border-radius:14px;padding:28px 20px;text-align:center;cursor:pointer;transition:all .2s;background:${BG}}
-.csv-zone:hover,.csv-zone.dragover{border-color:${BLUE};background:${BLUE_LT}}
-.csv-hint{font-size:12px;color:${SECONDARY};line-height:1.6}
-.csv-hint code{font-family:'SF Mono','Fira Mono',monospace;font-size:11px;background:rgba(0,0,0,.05);padding:1px 5px;border-radius:4px}
-.upload-btn{background:${LABEL};color:${WHITE};font-family:inherit;font-size:12px;font-weight:600;padding:8px 20px;border:none;border-radius:980px;cursor:pointer;margin-top:14px;display:inline-block;transition:opacity .15s}
-.upload-btn:hover{opacity:.75}
-.err-box{background:${RED_LT};border:1px solid rgba(255,59,48,.2);border-radius:10px;padding:11px 14px;margin-top:10px}
-.err-line{font-size:12px;color:${RED};margin-bottom:3px}
-.ok-box{background:#F0FFF3;border:1px solid rgba(40,205,65,.25);border-radius:10px;padding:10px 14px;margin-top:10px;font-size:12px;color:#1C8C45}
-.stu-table-wrap{max-height:360px;overflow-y:auto;border:1px solid ${SEP};border-radius:14px;margin-top:6px}
-.stu-table{width:100%;border-collapse:collapse}
-.stu-table th{font-size:10px;font-weight:600;color:${SECONDARY};padding:8px 10px;text-align:left;border-bottom:1px solid ${SEP};background:${BG};position:sticky;top:0}
-.stu-table td{font-size:12px;color:${LABEL};padding:8px 10px;border-bottom:1px solid ${SEP}}
-.stu-table tr:last-child td{border-bottom:none}
-.stu-table tr:hover td{background:rgba(0,113,227,.03)}
-.tier-badge{display:inline-flex;align-items:center;justify-content:center;padding:2px 9px;border-radius:6px;font-size:11px;font-weight:600;color:${WHITE}}
-.del-btn{background:none;border:none;color:${TERTIARY};cursor:pointer;font-size:16px;padding:0 4px;transition:color .12s;line-height:1}
-.del-btn:hover{color:${RED}}
-.clear-btn{background:none;border:1px solid ${SEP};color:${SECONDARY};font-family:inherit;font-size:12px;padding:5px 14px;border-radius:980px;cursor:pointer;transition:all .15s}
-.clear-btn:hover{border-color:${RED};color:${RED};background:${RED_LT}}
-.empty-state{padding:44px 20px;text-align:center;font-size:14px;color:${TERTIARY}}
-.score-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
-.score-card{background:${BG};border:1px solid ${SEP};border-radius:12px;padding:14px}
-.pro-wrap{position:relative}
-.tier-map-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
-.callout{border-radius:12px;padding:14px 16px;display:flex;align-items:flex-start;gap:10px;margin-bottom:16px}
-.callout-blue{background:${BLUE_LT};border:1px solid rgba(0,113,227,.15)}
-.callout-red{background:${RED_LT};border:1px solid rgba(255,59,48,.15)}
-.callout-text{font-size:13px;color:${LABEL};line-height:1.5}
-.tea-box{background:${LABEL};border-radius:14px;padding:18px;margin-bottom:14px}
-.ftr{background:${WHITE};border-top:1px solid ${SEP};margin-top:48px}
-/* ── REVENUE TRACKER ── */
-.rev-input{width:100%;background:${BG};border:1px solid ${SEP};border-radius:9px;padding:8px 12px;font-family:-apple-system,inherit;font-size:14px;font-weight:600;color:${LABEL};outline:none;transition:border-color .15s,box-shadow .15s;-moz-appearance:textfield}
-.rev-input::-webkit-inner-spin-button,.rev-input::-webkit-outer-spin-button{-webkit-appearance:none}
-.rev-input:focus{border-color:${BLUE};box-shadow:0 0 0 3px rgba(0,113,227,.12);background:${WHITE}}
-.rev-kpi{background:${WHITE};border:1px solid ${SEP};border-radius:16px;padding:20px;transition:box-shadow .2s}
-.rev-kpi:hover{box-shadow:0 4px 20px rgba(0,0,0,.07)}
-.rev-kpi-label{font-size:11px;font-weight:500;color:${SECONDARY};margin-bottom:6px;letter-spacing:-.1px}
-.rev-kpi-val{font-size:24px;font-weight:700;color:${LABEL};letter-spacing:-.8px;line-height:1;margin-bottom:4px}
-.rev-kpi-sub{font-size:11px;color:${SECONDARY}}
-.rev-table{width:100%;border-collapse:collapse}
-.rev-table th{font-size:10px;font-weight:600;color:${SECONDARY};padding:8px 12px;text-align:left;border-bottom:1px solid ${SEP};background:${BG}}
-.rev-table td{font-size:13px;color:${LABEL};padding:9px 12px;border-bottom:1px solid ${SEP}}
-.rev-table tr:last-child td{border-bottom:none}
-.rev-table tr:hover td{background:rgba(0,113,227,.02)}
-.rev-table .mono{font-family:'SF Mono','Fira Mono',monospace;font-size:12px}
-.opportunity-bar{height:8px;background:${SEP};border-radius:4px;overflow:hidden;margin-top:6px}
-.opportunity-fill{height:8px;border-radius:4px;background:linear-gradient(90deg,${GREEN},${BLUE});transition:width .5s ease}
-.ftr-main{max-width:1200px;margin:0 auto;padding:24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px}
-.ftr-brand{font-size:12px;color:${SECONDARY}}
-.ftr-credit{font-size:11px;color:${TERTIARY};margin-top:4px}
-.ftr-btns{display:flex;gap:8px}
-.ftr-btn{background:none;border:1px solid ${SEP};color:${LABEL};font-family:inherit;font-size:12px;font-weight:500;padding:7px 16px;border-radius:980px;cursor:pointer;text-decoration:none;display:inline-block;transition:all .15s}
-.ftr-btn:hover{border-color:${LABEL}}
-.ftr-btn-blue{background:${BLUE};border-color:${BLUE};color:${WHITE}}
-.ftr-btn-blue:hover{opacity:.85}
-
-/* ── FACTOR SCORING GRID ── */
-.domain-block{border:1px solid ${SEP};border-radius:14px;overflow:hidden;margin-bottom:10px}
-.domain-block-hdr{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid ${SEP}}
-.domain-block-title{font-size:13px;font-weight:600;color:${LABEL};letter-spacing:-.2px}
-.domain-score-badge{font-size:11px;font-weight:700;color:${WHITE};padding:2px 10px;border-radius:6px;margin-left:auto;flex-shrink:0}
-.factor-row{display:grid;grid-template-columns:180px 1fr 130px;gap:12px;align-items:start;padding:10px 16px;border-bottom:1px solid ${SEP};background:${WHITE}}
-.factor-row:last-child{border-bottom:none}
-.factor-label{font-size:11px;font-weight:600;color:${SECONDARY};padding-top:2px}
-.factor-rubric{font-size:11px;color:${SECONDARY};line-height:1.45;font-style:italic}
-.factor-select{background:${BG};border:1px solid ${SEP};border-radius:8px;padding:7px 10px;font-family:inherit;font-size:12px;color:${LABEL};outline:none;cursor:pointer;-webkit-appearance:none;transition:border-color .15s,box-shadow .15s;width:100%}
-.factor-select:focus{border-color:${BLUE};box-shadow:0 0 0 3px rgba(0,113,227,.12);background:${WHITE}}
-
-/* ── TIER PREVIEW BADGE ── */
-.tier-preview{display:inline-flex;align-items:center;gap:8px;padding:8px 16px;border-radius:10px;margin-top:10px;font-size:13px;font-weight:600;color:${WHITE}}
-
-/* ── SCORE COLOR ── */
-.s0{color:${TERTIARY}}.s1{color:${TEAL}}.s2{color:${INDIGO}}.s3{color:${RED}}
-
-@media(max-width:900px){
-  .kpi-grid{grid-template-columns:repeat(2,1fr)}
-  .g2,.g3r{grid-template-columns:1fr}
-  .score-grid{grid-template-columns:repeat(2,1fr)}
-  .factor-row{grid-template-columns:1fr;gap:6px}
-  .main,.nav-inner,.hero-inner,.tab-bar-inner,.ftr-main{padding-left:16px;padding-right:16px}
-  .hero,.tab-bar{padding-left:16px;padding-right:16px}
-}
-`;
-
-/* ══════════════════════════════════════════
-   MAIN COMPONENT
-══════════════════════════════════════════ */
-export default function SpedFundingDashboard() {
-  const [activeTab,setActiveTab]=useState("students");
-  const [students,setStudents]=useState([]);
-  const [form,setForm]=useState(blankForm());
-  const [formErr,setFormErr]=useState("");
-  const [csvErrors,setCsvErrors]=useState([]);
-  const [csvSuccess,setCsvSuccess]=useState("");
-  const [isDragOver,setIsDragOver]=useState(false);
-  const fileInputRef=useRef(null);
-
-  const tabs=[
-    {key:"students",label:"Students"},
-    {key:"overview",label:"Overview"},
-    {key:"revenue",label:"Revenue Tracker"},
-    {key:"tiers",label:"Intensity Tiers"},
-    {key:"compliance",label:"Compliance"},
-  ];
-
-  const tierDistribution=useMemo(()=>
-    Array.from({length:8},(_,i)=>{
-      const count=students.filter(s=>s.tier===i+1).length;
-      return {tier:`T${i+1}`,label:TIER_LABELS[i],students:count,pct:students.length?((count/students.length)*100).toFixed(1):"0.0",color:TIER_COLORS[i]};
-    }),[students]);
-
-  const sgStudents=useMemo(()=>students.filter(s=>s.sg>0).length,[students]);
-  const maxTierCount=useMemo(()=>Math.max(...tierDistribution.map(t=>t.students),1),[tierDistribution]);
-
-  // ── REVENUE TRACKER STATE ──
-  const [rev,setRev]=useState({
-    totalEnrollment: 20000,
-    fy25SpedAllotment: 1840000,
-    baseSPEDWeightFSP: 1.1,
-    holdHarmless: true,
-    tierRates: [800,950,1100,1300,1600,2000,2600,3500],
-    sgRates: [0,400,700,1100,900,1400],
-    projEnrollmentDelta: 0,
-    underscorePct: 15,
-    avgMinsPerDay: 120,
-    // FIIE — $1,000 per Full Individual & Initial Evaluation (TEC §48.159, HB 2 SY2025-26+)
-    fiiePublicCount: 0,
-    fiiePrivateCount: 0,
-  });
-
-  // Live revenue calculations from actual students
-  const revenueCalc = useMemo(()=>{
-    const n = students.length;
-    if(n===0) return null;
-
-    // Current IOS revenue from entered students
-    const tierRevenue = students.reduce((sum,s)=>sum+(rev.tierRates[s.tier-1]||0),0);
-    const sgRevenue   = students.reduce((sum,s)=>sum+(rev.sgRates[s.sg]||0),0);
-    const totalIOS    = tierRevenue + sgRevenue;
-
-    // Hold-harmless: district gets at least FY25 amount
-    const fy26Projected = rev.holdHarmless ? Math.max(totalIOS, rev.fy25SpedAllotment) : totalIOS;
-
-    // FY27 (no hold-harmless): pure IOS
-    const fy27Projected = totalIOS;
-
-    // Delta vs old model
-    const deltaVsOld = fy26Projected - rev.fy25SpedAllotment;
-    const deltaFY27  = fy27Projected - rev.fy25SpedAllotment;
-
-    // Under-scoring opportunity (if X% of students are under-scored by 1 tier)
-    const underscoredStudents = Math.round(n * (rev.underscorePct/100));
-    const avgTierRateGap = 300; // avg revenue gap moving up one tier
-    const underscoreOpportunity = underscoredStudents * avgTierRateGap;
-
-    // Per-student average
-    const perStudentAvg = n>0 ? Math.round(totalIOS/n) : 0;
-
-    // Tier breakdown
-    const tierBreakdown = Array.from({length:8},(_,i)=>{
-      const count = students.filter(s=>s.tier===i+1).length;
-      return { tier:i+1, label:TIER_LABELS[i], count, rate:rev.tierRates[i], subtotal:count*rev.tierRates[i], color:TIER_COLORS[i] };
-    }).filter(t=>t.count>0);
-
-    // SG breakdown
-    const sgBreakdown = [1,2,3,4,5].map(sg=>({
-      sg, label:SERVICE_GROUPS[sg], count:students.filter(s=>s.sg===sg).length,
-      rate:rev.sgRates[sg], subtotal:students.filter(s=>s.sg===sg).length*rev.sgRates[sg],
-    })).filter(s=>s.count>0);
-
-    // FIIE allotment — $1,000 per completed evaluation (TEC §48.159, HB 2, SY2025-26+)
-    const fiieTotal = (rev.fiiePublicCount + rev.fiiePrivateCount) * 1000;
-    const totalWithFIIE = totalIOS + fiieTotal;
-    const fy26ProjectedWithFIIE = rev.holdHarmless
-      ? Math.max(totalIOS, rev.fy25SpedAllotment) + fiieTotal
-      : totalWithFIIE;
-
-    return {
-      n, tierRevenue, sgRevenue, totalIOS,
-      fiieTotal, totalWithFIIE,
-      fy26Projected, fy27Projected, fy26ProjectedWithFIIE,
-      deltaVsOld, deltaFY27,
-      underscoredStudents, underscoreOpportunity,
-      perStudentAvg, tierBreakdown, sgBreakdown,
-    };
-  },[students,rev]);
-
-  // Live tier preview from current form
-  const previewTier=useMemo(()=>calcTierFromFactors(form.factors,form.override),[form.factors,form.override]);
-
-  // Service group from current form
-  const previewSG=useMemo(()=>{
-    const {sg13,sg45}=calcServiceGroups(
-      parseInt(form.relatedMins)||0,
-      form.hasTransport,form.hasParentCounseling,
-      parseInt(form.ratio1to1)||0
-    );
-    return sg45>0?sg45:sg13;
-  },[form]);
-
-  function setFactor(di,fi,val){
-    const f=form.factors.map((d,i)=>i===di?d.map((v,j)=>j===fi?val:v):d);
-    setForm(prev=>({...prev,factors:f}));
-  }
-
-  function handleAdd(){
-    if(!form.id.trim()){setFormErr("Student ID is required.");return;}
-    if(students.find(s=>s.id===form.id.trim())){setFormErr("Student ID already exists.");return;}
-    setFormErr("");
-    const tier=calcTierFromFactors(form.factors,form.override);
-    const {sg13,sg45}=calcServiceGroups(parseInt(form.relatedMins)||0,form.hasTransport,form.hasParentCounseling,parseInt(form.ratio1to1)||0);
-    const sg=sg45>0?sg45:sg13;
-    setStudents(prev=>[...prev,{id:form.id.trim(),name:form.name.trim(),tier,sg,factors:form.factors,override:form.override}]);
-    setForm(blankForm());
-  }
-
-  function handleDelete(id){setStudents(prev=>prev.filter(s=>s.id!==id));}
-
-  function processCSVText(text){
-    setCsvErrors([]);setCsvSuccess("");
-    const {students:parsed,errors}=parseCSV(text);
-    if(errors.length){setCsvErrors(errors);return;}
-    let added=0;
-    setStudents(prev=>{const ex=new Set(prev.map(s=>s.id));const n=parsed.filter(s=>!ex.has(s.id));added=n.length;return[...prev,...n];});
-    setCsvSuccess(`${parsed.length} rows parsed — ${added} students added.`);
-  }
-
-  function handleFileChange(e){const file=e.target.files[0];if(!file)return;const r=new FileReader();r.onload=ev=>processCSVText(ev.target.result);r.readAsText(file);e.target.value="";}
-  function handleDrop(e){e.preventDefault();setIsDragOver(false);const file=e.dataTransfer.files[0];if(!file)return;const r=new FileReader();r.onload=ev=>processCSVText(ev.target.result);r.readAsText(file);}
-
-  return(
-    <>
-      <style>{css}</style>
-      <div style={{minHeight:"100vh",background:BG}}>
-
-        {/* HERO */}
-        <div className="hero">
-          <div className="hero-inner">
-            <div className="hero-eyebrow">HB 2 · Intensity of Services · FY2026–27 · TEA-Aligned Scoring</div>
-            <div className="hero-title">SPED Funding Intelligence</div>
-            <div className="hero-sub">Factor-level scoring aligned to TEA's official framework</div>
-            <div className="hero-meta">
-              {/* Inline editable enrollment */}
-              <div className="meta-chip" style={{gap:6,paddingRight:6}}>
-                <span>Enrollment</span>
-                <input
-                  type="number"
-                  value={rev.totalEnrollment}
-                  onChange={e=>setRev(r=>({...r,totalEnrollment:parseInt(e.target.value)||0}))}
-                  style={{
-                    width:72,fontWeight:700,fontSize:13,color:LABEL,
-                    background:"transparent",border:"none",outline:"none",
-                    fontFamily:"inherit",padding:0,
-                    MozAppearance:"textfield",
-                  }}
-                />
-                <span style={{fontWeight:600,color:LABEL}}>ADA</span>
-              </div>
-              <div className="meta-chip">SPED Students <strong>{students.length||"—"}</strong></div>
-              {students.length>0&&rev.totalEnrollment>0&&(
-                <div className="meta-chip">SPED Rate <strong>{((students.length/rev.totalEnrollment)*100).toFixed(1)}%</strong></div>
-              )}
-              <div className="teal-chip">⬡ TEA Factor Scoring Active</div>
-              <div className="alert-chip">⚠ PEIMS Due Oct 8</div>
-            </div>
-          </div>
-        </div>
-
-        {/* TABS */}
-        <div className="tab-bar">
-          <div className="tab-bar-inner">
-            {tabs.map(t=>(
-              <button key={t.key} className={`tab-btn${activeTab===t.key?" active":""}`} onClick={()=>setActiveTab(t.key)}>
-                {t.label}{t.key==="students"&&students.length>0&&<span className="tab-count">{students.length}</span>}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <main className="main">
-
-          {/* ═══════════ STUDENTS ═══════════ */}
-          {activeTab==="students"&&<>
-            <div className="sec-hdr">
-              <div className="sec-title">Student Caseload</div>
-              <div className="sec-sub">Score each student using TEA's exact 4-factor rubric (Factors A–D) per domain. Tier auto-calculates using the "highest factor wins" rule.</div>
-            </div>
-
-            <div className="g2" style={{marginBottom:16,alignItems:"start"}}>
-
-              {/* ── MANUAL ENTRY FORM ── */}
-              <div className="stu-form">
-                <div className="card-title" style={{marginBottom:2}}>Add Student — TEA Factor Scoring</div>
-                <div className="card-sub">Score Factors A–D for each domain · Tier calculated automatically</div>
-
-                {/* ID + Name */}
-                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}}>
-                  <div>
-                    <label className="field-label">Student ID *</label>
-                    <input className="field-input" placeholder="e.g. 10012345" value={form.id}
-                      onChange={e=>setForm(f=>({...f,id:e.target.value}))}
-                      onKeyDown={e=>e.key==="Enter"&&handleAdd()}/>
-                  </div>
-                  <div>
-                    <label className="field-label">Name (optional)</label>
-                    <input className="field-input" placeholder="Last, First" value={form.name}
-                      onChange={e=>setForm(f=>({...f,name:e.target.value}))}/>
-                  </div>
-                </div>
-
-                {/* Override */}
-                <div style={{marginBottom:12}}>
-                  <label className="field-label">Override (if applicable)</label>
-                  <select className="field-select" value={form.override} onChange={e=>setForm(f=>({...f,override:e.target.value}))}>
-                    <option value="none">No Override — Score by Factors</option>
-                    <option value="speech">Speech Therapy Only → Auto Tier 1</option>
-                    <option value="day">ARD Day Placement → Auto Tier 7</option>
-                    <option value="residential">ARD Residential Placement → Auto Tier 8</option>
-                  </select>
-                </div>
-
-                {/* 5 Domain Factor Blocks */}
-                {form.override==="none"&&DOMAIN_NAMES.map((dname,di)=>{
-                  const ds=domainScore(form.factors[di]);
-                  return(
-                    <div className="domain-block" key={di} style={{marginBottom:10}}>
-                      <div className="domain-block-hdr" style={{background:`${DOMAIN_COLORS[di]}10`}}>
-                        <div style={{width:8,height:8,borderRadius:"50%",background:DOMAIN_COLORS[di],flexShrink:0}}/>
-                        <div className="domain-block-title" style={{color:DOMAIN_COLORS[di]}}>Domain {di+1}: {dname}</div>
-                        <div className="domain-score-badge" style={{background:TIER_COLORS[Math.min(ds,3)]}}>
-                          Score: {ds} — {["None","Minimum","Moderate","Significant"][ds]}
-                        </div>
-                      </div>
-                      {FACTOR_LABELS.map((flabel,fi)=>{
-                        const currentScore=form.factors[di][fi];
-                        return(
-                          <div className="factor-row" key={fi} style={{background:fi%2===0?WHITE:`${BG}`}}>
-                            <div className="factor-label">{flabel}</div>
-                            <div className="factor-rubric">
-                              {TEA_RUBRIC[di][["A","B","C","D"][fi]][currentScore]}
-                            </div>
-                            <div>
-                              <select className="factor-select" value={currentScore}
-                                onChange={e=>setFactor(di,fi,parseInt(e.target.value))}>
-                                {SCORE_OPTIONS.map(o=><option key={o.val} value={o.val}>{o.label}</option>)}
-                              </select>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  );
-                })}
-
-                {/* Service Groups */}
-                <div style={{background:BG,borderRadius:12,padding:"12px 14px",marginBottom:12,border:`1px solid ${SEP}`}}>
-                  <div style={{fontSize:11,fontWeight:600,color:BLUE,marginBottom:10}}>Service Groups (Related Services &amp; 1:1 Ratio)</div>
-                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:10}}>
-                    <div>
-                      <label className="field-label">Related Services Min/6-Week Period</label>
-                      <select className="field-select" value={form.relatedMins} onChange={e=>setForm(f=>({...f,relatedMins:e.target.value}))}>
-                        <option value="0">0 — No related services</option>
-                        <option value="180">180–269 min → SG1</option>
-                        <option value="270">270–539 min → SG2</option>
-                        <option value="540">540+ min → SG3</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="field-label">1:1 Provider Ratio % of Instructional Day</label>
-                      <select className="field-select" value={form.ratio1to1} onChange={e=>setForm(f=>({...f,ratio1to1:e.target.value}))}>
-                        <option value="0">None</option>
-                        <option value="50">50–79% → SG4</option>
-                        <option value="80">80%+ → SG5</option>
-                      </select>
-                    </div>
-                  </div>
-                  <div style={{display:"flex",gap:16}}>
-                    {[["hasTransport","Special Transportation"],["hasParentCounseling","Parent Counseling & Training"]].map(([key,lbl])=>(
-                      <label key={key} style={{display:"flex",alignItems:"center",gap:6,fontSize:12,color:SECONDARY,cursor:"pointer"}}>
-                        <input type="checkbox" checked={form[key]} onChange={e=>setForm(f=>({...f,[key]:e.target.checked}))} style={{accentColor:BLUE}}/>
-                        {lbl} (+SG1 if not already SG2/3)
-                      </label>
-                    ))}
-                  </div>
-                  {previewSG>0&&(
-                    <div style={{marginTop:8,fontSize:12,color:BLUE,fontWeight:500}}>
-                      → Service Group: <strong>SG{previewSG}</strong> — {SERVICE_GROUPS[previewSG]}
-                    </div>
-                  )}
-                </div>
-
-                {/* Tier Preview */}
-                <div style={{background:TIER_COLORS[previewTier-1],borderRadius:10,padding:"10px 16px",marginBottom:12,display:"flex",alignItems:"center",gap:10}}>
-                  <div style={{fontSize:20,fontWeight:700,color:WHITE}}>T{previewTier}</div>
-                  <div>
-                    <div style={{fontSize:13,fontWeight:600,color:WHITE}}>Calculated Intensity Tier</div>
-                    <div style={{fontSize:11,color:"rgba(255,255,255,.8)"}}>{TIER_LABELS[previewTier-1]}</div>
-                  </div>
-                  <div style={{marginLeft:"auto",fontSize:11,color:"rgba(255,255,255,.7)"}}>
-                    Domain scores: {form.factors.map((f,i)=>`D${i+1}:${domainScore(f)}`).join(" · ")}
-                  </div>
-                </div>
-
-                <button className="add-btn" onClick={handleAdd}>Add Student</button>
-                {formErr&&<div className="err-box" style={{marginTop:8}}><div className="err-line">{formErr}</div></div>}
-              </div>
-
-              {/* ── CSV UPLOAD ── */}
-              <div className="stu-form">
-                <div className="card-title" style={{marginBottom:2}}>Import via CSV</div>
-                <div className="card-sub">Bulk import using factor-level columns or simple domain scores</div>
-                <div className={`csv-zone${isDragOver?" dragover":""}`}
-                  onDragOver={e=>{e.preventDefault();setIsDragOver(true)}}
-                  onDragLeave={()=>setIsDragOver(false)}
-                  onDrop={handleDrop}
-                  onClick={()=>fileInputRef.current?.click()}>
-                  <div style={{fontSize:32,marginBottom:10}}>📂</div>
-                  <div style={{fontSize:15,fontWeight:600,color:LABEL,marginBottom:4}}>Drop your CSV file here</div>
-                  <div className="csv-hint">
-                    <strong>Full factor columns:</strong> <code>D1A</code> <code>D1B</code> <code>D1C</code> <code>D1D</code> ... <code>D5D</code> (0–3 each)<br/>
-                    <strong>Simple fallback:</strong> <code>Domain1</code>–<code>Domain5</code> sets all 4 factors equal<br/>
-                    <strong>Plus:</strong> <code>StudentID</code> <code>Name</code> <code>Tier</code> <code>ServiceGroup</code>
-                  </div>
-                  <div className="upload-btn" onClick={e=>{e.stopPropagation();fileInputRef.current?.click()}}>Choose File</div>
-                  <input ref={fileInputRef} type="file" accept=".csv,.txt" style={{display:"none"}} onChange={handleFileChange}/>
-                </div>
-                {csvErrors.length>0&&<div className="err-box">{csvErrors.map((e,i)=><div key={i} className="err-line">⚠ {e}</div>)}</div>}
-                {csvSuccess&&<div className="ok-box">✓ {csvSuccess}</div>}
-
-                <div style={{marginTop:14,padding:"12px 14px",background:BG,borderRadius:10,border:`1px solid ${SEP}`}}>
-                  <div style={{fontSize:11,fontWeight:600,color:LABEL,marginBottom:6}}>Full factor-level format</div>
-                  {["StudentID,Name,ServiceGroup,D1A,D1B,D1C,D1D,D2A,D2B,D2C,D2D,D3A,D3B,D3C,D3D,D4A,D4B,D4C,D4D,D5A,D5B,D5C,D5D",
-                    "10012345,Smith John,2, 2,2,1,1, 1,1,0,0, 3,2,2,2, 0,0,0,0, 1,0,0,0",
-                    "10012346,Doe Jane,0, 1,0,0,0, 0,0,0,0, 1,1,0,0, 0,0,0,0, 0,0,0,0"].map((l,i)=>(
-                    <div key={i} style={{fontFamily:"'SF Mono','Fira Mono',monospace",fontSize:10,color:SECONDARY,lineHeight:1.9}}>{l}</div>
-                  ))}
-                </div>
-
-                {/* TEA comparison callout */}
-                <div style={{marginTop:14,background:BLUE_LT,border:`1px solid rgba(0,113,227,.15)`,borderRadius:12,padding:"12px 14px"}}>
-                  <div style={{fontSize:12,fontWeight:600,color:BLUE,marginBottom:4}}>Aligned to TEA's Official Framework</div>
-                  <div style={{fontSize:12,color:SECONDARY,lineHeight:1.5}}>
-                    Scoring uses TEA's exact 4-factor rubric (April 2026) with the "highest factor wins" domain rule and special T6/T7 conditions (4 significant + 1 moderate = T6; all 5 significant = T7).
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* ── STUDENT TABLE ── */}
-            <div className="card">
-              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:3}}>
-                <div className="card-title">Caseload Roster</div>
-                {students.length>0&&<button className="clear-btn" onClick={()=>{if(window.confirm("Clear all students?"))setStudents([])}}>Clear All</button>}
-              </div>
-              <div className="card-sub">{students.length} student{students.length!==1?"s":""} · Domain scores shown as highest factor per domain</div>
-              {students.length===0?(
-                <div className="empty-state">
-                  <div style={{fontSize:36,marginBottom:10}}>👥</div>
-                  <div>No students added yet</div>
-                  <div style={{fontSize:12,marginTop:4,color:TERTIARY}}>Use the form above or import a CSV to get started</div>
-                </div>
-              ):(
-                <div className="stu-table-wrap">
-                  <table className="stu-table">
-                    <thead>
-                      <tr>
-                        <th>#</th><th>Student ID</th><th>Name</th><th>Tier</th><th>Service Group</th>
-                        {DOMAIN_SHORT.map((d,i)=><th key={i} style={{color:DOMAIN_COLORS[i]}}>{d}</th>)}
-                        <th>Composite</th><th></th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {students.map((s,i)=>{
-                        const domScores=(s.factors||Array(5).fill([0,0,0,0])).map(f=>domainScore(f));
-                        const composite=domScores.reduce((a,b)=>a+b,0);
-                        return(
-                          <tr key={s.id}>
-                            <td style={{color:TERTIARY}}>{i+1}</td>
-                            <td style={{fontFamily:"'SF Mono','Fira Mono',monospace",fontSize:11}}>{s.id}</td>
-                            <td>{s.name||<span style={{color:TERTIARY}}>—</span>}</td>
-                            <td><span className="tier-badge" style={{background:TIER_COLORS[s.tier-1]}}>T{s.tier}</span></td>
-                            <td style={{color:SECONDARY,fontSize:11}}>{s.sg>0?SERVICE_GROUPS[s.sg]:<span style={{color:TERTIARY}}>—</span>}</td>
-                            {domScores.map((d,di)=>(
-                              <td key={di} style={{textAlign:"center",fontWeight:d>0?600:400,color:d===0?TERTIARY:d===3?RED:d===2?INDIGO:TEAL}}>{d}</td>
-                            ))}
-                            <td style={{fontWeight:600,color:composite>=9?RED:composite>=5?INDIGO:TEAL}}>{composite}</td>
-                            <td><button className="del-btn" onClick={()=>handleDelete(s.id)}>×</button></td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-          </>}
-
-          {/* ═══════════ OVERVIEW ═══════════ */}
-          {activeTab==="overview"&&<>
-            <div className="sec-hdr">
-              <div className="sec-title">Funding Overview</div>
-              <div className="sec-sub">Demo ISD · FY2026–27 Intensity of Services snapshot</div>
-            </div>
-            {students.length===0&&(
-              <div className="callout callout-blue" style={{marginBottom:20}}>
-                <div style={{fontSize:16,flexShrink:0,marginTop:1}}>💡</div>
-                <div className="callout-text">
-                  <strong>No students entered yet.</strong> Add students in the Students tab to populate live caseload data.{" "}
-                  <span onClick={()=>setActiveTab("students")} style={{color:BLUE,cursor:"pointer",fontWeight:500}}>Go to Students →</span>
-                </div>
-              </div>
-            )}
-            <div className="kpi-grid" style={{marginBottom:20}}>
-              {[
-                {icon:"👥",iconBg:TEAL_LT,label:"Total SPED Students",val:students.length||"0",delta:students.length&&rev.totalEnrollment?`${((students.length/rev.totalEnrollment)*100).toFixed(1)}% of enrollment`:"Enter students to populate",dir:"neu"},
-                {icon:"💰",iconBg:"#F0FFF3",label:"Est. IOS Funding FY26",val:"$1.92M",delta:"▲ Hold-harmless year",dir:"up"},
-                {icon:"🔗",iconBg:"rgba(88,86,214,.1)",label:"Service Group Students",val:sgStudents,delta:students.length?`${((sgStudents/(students.length||1))*100).toFixed(0)}% of caseload`:"—",dir:"neu"},
-                {icon:"📅",iconBg:RED_LT,label:"PEIMS Deadline",val:"Oct 8",delta:"2026 — Tier & SG required",dir:"dn"},
-              ].map((k,i)=>(
-                <div className="kpi" key={i}>
-                  <div className="kpi-icon" style={{background:k.iconBg}}>{k.icon}</div>
-                  <div className="kpi-lbl">{k.label}</div>
-                  <div className="kpi-val">{k.val}</div>
-                  <div className={`kpi-delta ${k.dir}`}>{k.delta}</div>
-                </div>
-              ))}
-            </div>
-            <div className="g2" style={{marginBottom:20}}>
-              <div className="card">
-                <div className="card-title">Intensity Tier Distribution</div>
-                <div className="card-sub">{students.length} SPED students · Demo ISD</div>
-                <ResponsiveContainer width="100%" height={200}>
-                  <BarChart data={tierDistribution} margin={{left:0,right:8,top:4,bottom:0}}>
-                    <CartesianGrid strokeDasharray="3 3" stroke={SEP} vertical={false}/>
-                    <XAxis dataKey="tier" tick={{fontFamily:"-apple-system,sans-serif",fontSize:11,fill:SECONDARY}} axisLine={false} tickLine={false}/>
-                    <YAxis tick={{fontFamily:"'SF Mono',monospace",fontSize:10,fill:TERTIARY}} axisLine={false} tickLine={false} allowDecimals={false}/>
-                    <Tooltip content={<Tip/>} cursor={{fill:"rgba(0,0,0,.03)"}}/>
-                    <Bar dataKey="students" name="Students" radius={[6,6,0,0]}>
-                      {tierDistribution.map((e,i)=><rect key={i} fill={e.color}/>)}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-              <div className="card">
-                <div className="card-title">Funding Model Comparison</div>
-                <div className="card-sub">Old instructional arrangement vs. intensity model</div>
-                <ResponsiveContainer width="100%" height={200}>
-                  <BarChart data={fundingComparison} margin={{left:0,right:8,top:4,bottom:0}}>
-                    <CartesianGrid strokeDasharray="3 3" stroke={SEP} vertical={false}/>
-                    <XAxis dataKey="year" tick={{fontFamily:"-apple-system,sans-serif",fontSize:11,fill:SECONDARY}} axisLine={false} tickLine={false}/>
-                    <YAxis tickFormatter={v=>fmt(v)} tick={{fontFamily:"'SF Mono',monospace",fontSize:10,fill:TERTIARY}} axisLine={false} tickLine={false}/>
-                    <Tooltip content={<Tip/>} cursor={{fill:"rgba(0,0,0,.03)"}}/>
-                    <Bar dataKey="amount" name="SPED Funding" radius={[6,6,0,0]} fill={BLUE}/>
-                  </BarChart>
-                </ResponsiveContainer>
-                <div style={{marginTop:10,fontSize:11,color:SECONDARY}}>FY2026–27 hold-harmless: district receives at least the old-model amount. Expires FY2027–28.</div>
-              </div>
-            </div>
-            <div className="card pro-wrap" style={{minHeight:200,marginBottom:0}}>
-              <div className="card-title">Custom Funding Projection</div>
-              <div className="card-sub">Model your FY2027–28 SPED funding under the full intensity model</div>
-              <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10,marginTop:4,opacity:.25}}>
-                {["Total SPED Students","Tier 4–5 Count","Service Group 4–5 Count","Property Value / ADA"].map(l=>(
-                  <div key={l}><div style={{fontSize:11,color:SECONDARY,marginBottom:5}}>{l}</div><div style={{height:36,background:BG,border:`1px solid ${SEP}`,borderRadius:9}}/></div>
-                ))}
-              </div>
-              <ProOverlay title="District Funding Projector" desc="Model your FY2027–28 SPED funding using real district data, tier distributions, and service group counts."/>
-            </div>
-          </>}
-
-          {/* ═══════════ TIERS ═══════════ */}
-          {activeTab==="tiers"&&<>
-            <div className="sec-hdr">
-              <div className="sec-title">8 Intensity Tiers</div>
-              <div className="sec-sub">HB 2 framework · TEA's "highest factor wins" domain rule · Special T6/T7 conditions</div>
-            </div>
-            <div className="g3r">
-              <div>
-                <div className="card" style={{marginBottom:14}}>
-                  <div className="card-title">District Tier Distribution</div>
-                  <div className="card-sub">{students.length===0?"Add students to populate":"Live from caseload"} · {students.length} students</div>
-                  <div className="tier-list">
-                    {tierDistribution.map((t,i)=>(
-                      <div className="tier-row" key={i}>
-                        <div className="tier-dot" style={{background:t.color}}/>
-                        <div className="tier-name">T{i+1} — {t.label}</div>
-                        <div className="tier-bar-wrap"><div className="tier-bar-fill" style={{width:`${(t.students/maxTierCount)*100}%`,background:t.color}}/></div>
-                        <div className="tier-count">{t.students}</div>
-                        <div className="tier-pct">{t.pct}%</div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-              <div className="card">
-                <div className="card-title">TEA Scoring Rules</div>
-                <div className="card-sub">Official April 2026 framework · Factor A–D · Highest factor wins per domain</div>
-                <div className="score-grid">
-                  {[
-                    {val:"0",name:"No Support",desc:"No direct SPED services required for FAPE in this domain.",color:TERTIARY},
-                    {val:"1",name:"Minimum",desc:"Targeted, limited SDI for specific needs; typically <60 min/week for behavioral/comm/IF/PC domains.",color:TEAL},
-                    {val:"2",name:"Moderate",desc:"SDI necessary for consistent access; delivered multiple times/week; 1–5 hrs/week typically.",color:INDIGO},
-                    {val:"3",name:"Significant",desc:"Intensive, pervasive SDI substantially structuring participation throughout the day.",color:RED},
-                  ].map((s,i)=>(
-                    <div className="score-card" key={i}>
-                      <div style={{fontSize:26,fontWeight:700,letterSpacing:"-.8px",color:s.color,lineHeight:1,marginBottom:4}}>{s.val}</div>
-                      <div style={{fontSize:11,fontWeight:600,color:BLUE,marginBottom:5}}>{s.name}</div>
-                      <div style={{fontSize:12,color:SECONDARY,lineHeight:1.45}}>{s.desc}</div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Special T6/T7 conditions */}
-                <div style={{background:`${RED_LT}`,border:`1px solid rgba(255,59,48,.15)`,borderRadius:12,padding:14,marginBottom:12}}>
-                  <div style={{fontSize:12,fontWeight:600,color:RED,marginBottom:8}}>Special Tier 6 &amp; 7 Conditions (TEA)</div>
-                  <div style={{fontSize:12,color:LABEL,lineHeight:1.6}}>
-                    <strong>Tier 6:</strong> 4 domains rated Significant + 1 domain rated Moderate<br/>
-                    <strong>Tier 7:</strong> All 5 domains rated Significant<br/>
-                    <strong>Tier 8:</strong> ARD committee places student in Residential Program (Override)
-                  </div>
-                </div>
-
-                <div style={{background:BG,border:`1px solid ${SEP}`,borderRadius:12,padding:14}}>
-                  <div style={{fontSize:12,fontWeight:600,color:LABEL,marginBottom:10}}>Composite Score → Tier Mapping</div>
-                  <div className="tier-map-grid">
-                    {[
-                      {range:"Speech Only",tier:"T1"},{range:"Sum 1–2",tier:"T2"},
-                      {range:"Sum 3–4",tier:"T3"},{range:"Sum 5–6",tier:"T4"},
-                      {range:"Sum 7–8",tier:"T5"},{range:"Sum 9–10 or 4 Sig+1 Mod",tier:"T6"},
-                      {range:"Sum 11+ or 5 Sig or Day Placement",tier:"T7"},{range:"Residential",tier:"T8"},
-                    ].map((m,i)=>(
-                      <div key={i} style={{background:TIER_COLORS[i],borderRadius:10,padding:"8px 10px",textAlign:"center"}}>
-                        <div style={{fontSize:13,fontWeight:700,color:WHITE}}>{m.tier}</div>
-                        <div style={{fontSize:9,color:"rgba(255,255,255,.75)",marginTop:2,lineHeight:1.3}}>{m.range}</div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* 4 Factors */}
-                <div style={{marginTop:14}}>
-                  <div style={{fontSize:12,fontWeight:600,color:LABEL,marginBottom:8}}>4 Factors Scored Per Domain</div>
-                  {FACTOR_LABELS.map((fl,i)=>(
-                    <div key={i} style={{display:"flex",alignItems:"center",gap:10,padding:"8px 0",borderBottom:i<3?`1px solid ${SEP}`:"none"}}>
-                      <div style={{width:24,height:24,borderRadius:6,background:BLUE,display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,color:WHITE,flexShrink:0}}>{"ABCD"[i]}</div>
-                      <div style={{fontSize:13,color:LABEL}}>{fl}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </>}
-
-          {/* ═══════════ COMPLIANCE ═══════════ */}
-          {activeTab==="compliance"&&<>
-            <div className="sec-hdr">
-              <div className="sec-title">Compliance &amp; PEIMS</div>
-              <div className="sec-sub">HB 2 transition timeline · FY2026–27 key dates and data elements</div>
-            </div>
-            <div className="callout callout-red" style={{marginBottom:20}}>
-              <div style={{fontSize:16,flexShrink:0,marginTop:1}}>⚠️</div>
-              <div className="callout-text">
-                <strong>Critical IEP Documentation Rule:</strong> Every factor rating above 0 must be explicitly supported by current IEP documentation. If not written as required for FAPE, it cannot be scored. ARD committees must review all 4 factors across all 5 domains before October 8, 2026.
-              </div>
-            </div>
-            <div className="g2" style={{marginBottom:20}}>
-              <div className="card">
-                <div className="card-title">Critical Compliance Dates</div>
-                <div className="card-sub">FY2026–27 transition year · HB 2 intensity of services</div>
-                <ul className="comp-list">
-                  {complianceDates.map((c,i)=>(
-                    <li key={i} className="comp-item">
-                      <div className="comp-dot" style={{background:c.urgent?RED:ORANGE}}/>
-                      <div className="comp-date">{c.date}</div>
-                      <div className="comp-task">{c.task}</div>
-                      {c.urgent&&<div className="comp-urgent-tag">Urgent</div>}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <div>
-                <div className="card" style={{marginBottom:14}}>
-                  <div className="card-title">New PEIMS Data Elements</div>
-                  <div className="card-sub">FY2026–27 required submissions</div>
-                  <table className="pt">
-                    <thead><tr><th>Element</th><th>Status</th><th>Due</th></tr></thead>
-                    <tbody>
-                      {[
-                        {el:"Tier of Intensity (1–8)",status:"new",due:"Oct 8, 2026"},
-                        {el:"Service Group (1–5)",status:"new",due:"Oct 8, 2026"},
-                        {el:"Minutes in SPED Setting",status:"new",due:"Oct 8, 2026"},
-                        {el:"Educational Environment",status:"new",due:"Annual IEP"},
-                        {el:"Instructional Arrangement",status:"cont",due:"Oct 25, 2026"},
-                      ].map((r,i)=>(
-                        <tr key={i}>
-                          <td style={{fontWeight:500}}>{r.el}</td>
-                          <td><span className={`tag tag-${r.status}`}>{r.status==="new"?"NEW":"Continues"}</span></td>
-                          <td style={{fontFamily:"'SF Mono','Fira Mono',monospace",fontSize:11,color:SECONDARY}}>{r.due}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-                <div className="tea-box">
-                  <div style={{fontSize:11,fontWeight:600,letterSpacing:".04em",textTransform:"uppercase",color:TEAL,marginBottom:12}}>TEA Contacts</div>
-                  {[
-                    {label:"SPED Funding Questions",val:"spedfunding@tea.texas.gov"},
-                    {label:"PEIMS / TSDS Questions",val:"TSDSCustomerSupport@tea.texas.gov"},
-                    {label:"Zoom Office Hours",val:"May 7+ · 9:00–9:30am & 4:00–4:30pm"},
-                  ].map((c,i)=>(
-                    <div key={i} style={{padding:"8px 0",borderBottom:i<2?"1px solid rgba(255,255,255,.08)":"none"}}>
-                      <div style={{fontSize:11,color:"rgba(255,255,255,.45)",marginBottom:2}}>{c.label}</div>
-                      <div style={{fontFamily:"'SF Mono','Fira Mono',monospace",fontSize:12,color:WHITE}}>{c.val}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-            <div className="card pro-wrap" style={{minHeight:180,marginBottom:0}}>
-              <div className="card-title">District Caseload PEIMS Submission Tracker</div>
-              <div className="card-sub">Track factor scoring completion by campus and SPED director</div>
-              <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12,opacity:.25,marginTop:4}}>
-                {["Campus A — 124 students","Campus B — 89 students","Campus C — 151 students"].map(l=>(
-                  <div key={l} style={{background:BG,border:`1px solid ${SEP}`,borderRadius:10,padding:14}}>
-                    <div style={{fontSize:13,fontWeight:500,color:LABEL,marginBottom:8}}>{l}</div>
-                    <div style={{height:5,background:SEP,borderRadius:3}}><div style={{height:5,width:"60%",background:BLUE,borderRadius:3}}/></div>
-                    <div style={{fontSize:11,color:SECONDARY,marginTop:5}}>60% complete</div>
-                  </div>
-                ))}
-              </div>
-              <ProOverlay title="Caseload Tracker" desc="Track factor scoring completion by campus and export PEIMS-ready data to your TSDS submission."/>
-            </div>
-          </>}
-
-          {/* ═══════════ REVENUE TRACKER ═══════════ */}
-          {activeTab==="revenue"&&<>
-            <div className="sec-hdr">
-              <div className="sec-title">Revenue Tracker</div>
-              <div className="sec-sub">Potential funding increases and under-scoring opportunities · Based on your entered caseload + TEA IOS allotment estimates</div>
-            </div>
-
-            {/* No students warning */}
-            {students.length===0&&(
-              <div className="callout callout-blue" style={{marginBottom:20}}>
-                <div style={{fontSize:16,flexShrink:0,marginTop:1}}>💡</div>
-                <div className="callout-text">
-                  <strong>No students entered yet.</strong> Add students in the Students tab to generate live revenue calculations.{" "}
-                  <span onClick={()=>setActiveTab("students")} style={{color:BLUE,cursor:"pointer",fontWeight:500}}>Go to Students →</span>
-                </div>
-              </div>
-            )}
-
-            <div className="g2" style={{marginBottom:16,alignItems:"start"}}>
-
-              {/* ── LEFT: INPUTS ── */}
-              <div>
-                <div className="card" style={{marginBottom:14}}>
-                  <div className="card-title">District Inputs</div>
-                  <div className="card-sub">Adjust to match your district's actual figures</div>
-
-                  {[
-                    {key:"fy25SpedAllotment",label:"FY25 SPED Allotment (Old Model)",prefix:"$",hint:"Your last actual SPED state funding amount"},
-                    {key:"totalEnrollment",label:"Total District Enrollment (ADA)",prefix:"",hint:"Used to calculate SPED rate"},
-                    {key:"underscorePct",label:"Est. % Students Currently Under-Scored",prefix:"",suffix:"%",hint:"Students whose IEPs may support a higher tier than currently assigned"},
-                  ].map(({key,label,prefix,suffix,hint})=>(
-                    <div key={key} style={{marginBottom:14}}>
-                      <label className="field-label">{label}</label>
-                      <div style={{display:"flex",alignItems:"center",gap:6}}>
-                        {prefix&&<span style={{fontSize:16,fontWeight:600,color:SECONDARY}}>{prefix}</span>}
-                        <input type="number" className="rev-input"
-                          value={rev[key]}
-                          onChange={e=>setRev(r=>({...r,[key]:parseFloat(e.target.value)||0}))}
-                        />
-                        {suffix&&<span style={{fontSize:13,fontWeight:600,color:SECONDARY}}>{suffix}</span>}
-                      </div>
-                      <div style={{fontSize:11,color:TERTIARY,marginTop:3}}>{hint}</div>
-                    </div>
-                  ))}
-
-                  {/* FIIE Section */}
-                  <div style={{background:`${BLUE_LT}`,border:`1px solid rgba(0,113,227,.15)`,borderRadius:12,padding:"12px 14px",marginBottom:14}}>
-                    <div style={{fontSize:12,fontWeight:700,color:BLUE,marginBottom:2}}>
-                      📋 FIIE Allotment — $1,000 per Evaluation
-                    </div>
-                    <div style={{fontSize:11,color:SECONDARY,marginBottom:10,lineHeight:1.5}}>
-                      TEC §48.159 (HB 2, SY2025–26+) · $1,000 per completed Full Individual &amp; Initial Evaluation for both public and private/homeschool students
-                    </div>
-                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
-                      <div>
-                        <label className="field-label">Public School FIIEs Completed</label>
-                        <input type="number" className="rev-input"
-                          value={rev.fiiePublicCount}
-                          onChange={e=>setRev(r=>({...r,fiiePublicCount:parseInt(e.target.value)||0}))}
-                          placeholder="0"
-                        />
-                        <div style={{fontSize:10,color:TERTIARY,marginTop:2}}>Students enrolled in your district</div>
-                      </div>
-                      <div>
-                        <label className="field-label">Private/Homeschool FIIEs Completed</label>
-                        <input type="number" className="rev-input"
-                          value={rev.fiiePrivateCount}
-                          onChange={e=>setRev(r=>({...r,fiiePrivateCount:parseInt(e.target.value)||0}))}
-                          placeholder="0"
-                        />
-                        <div style={{fontSize:10,color:TERTIARY,marginTop:2}}>Child-find evaluations for non-enrolled students</div>
-                      </div>
-                    </div>
-                    {(rev.fiiePublicCount+rev.fiiePrivateCount)>0&&(
-                      <div style={{marginTop:10,padding:"8px 12px",background:"rgba(0,113,227,.1)",borderRadius:8,fontSize:13,fontWeight:600,color:BLUE}}>
-                        → FIIE Allotment: {fmt((rev.fiiePublicCount+rev.fiiePrivateCount)*1000)}
-                        <span style={{fontSize:11,fontWeight:400,color:SECONDARY,marginLeft:6}}>
-                          ({rev.fiiePublicCount+rev.fiiePrivateCount} evaluations × $1,000)
-                        </span>
-                      </div>
-                    )}
-                  </div>
-
-                  <div style={{marginBottom:14}}>
-                    <label className="field-label">Hold-Harmless Protection (FY26)</label>                    <div style={{display:"flex",gap:10}}>
-                      {[true,false].map(v=>(
-                        <button key={String(v)} onClick={()=>setRev(r=>({...r,holdHarmless:v}))}
-                          style={{flex:1,padding:"8px 0",borderRadius:9,border:`1.5px solid ${rev.holdHarmless===v?BLUE:SEP}`,background:rev.holdHarmless===v?BLUE_LT:BG,color:rev.holdHarmless===v?BLUE:SECONDARY,fontSize:12,fontWeight:600,cursor:"pointer",fontFamily:"inherit",transition:"all .15s"}}>
-                          {v?"Active (FY26)":"Off (FY27+)"}
-                        </button>
-                      ))}
-                    </div>
-                    <div style={{fontSize:11,color:TERTIARY,marginTop:3}}>FY26 hold-harmless: district receives at least old-model amount</div>
-                  </div>
-
-                  {/* Tier rate editor */}
-                  <div style={{background:BG,borderRadius:12,padding:"12px 14px",border:`1px solid ${SEP}`}}>
-                    <div style={{fontSize:11,fontWeight:600,color:LABEL,marginBottom:10}}>Est. IOS Allotment Rate per Student ($/yr) · Adjust to TEA actuals when published</div>
-                    <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8}}>
-                      {rev.tierRates.map((rate,i)=>(
-                        <div key={i}>
-                          <div style={{fontSize:10,fontWeight:700,color:TIER_COLORS[i],marginBottom:3}}>T{i+1}</div>
-                          <input type="number" className="rev-input" style={{fontSize:12,padding:"6px 8px"}}
-                            value={rate}
-                            onChange={e=>{const r=[...rev.tierRates];r[i]=parseFloat(e.target.value)||0;setRev(v=>({...v,tierRates:r}));}}
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                {/* SG rate editor */}
-                <div className="card">
-                  <div className="card-title">Service Group Add-On Rates ($/yr)</div>
-                  <div className="card-sub">Estimated additional allotment per student per service group</div>
-                  <div style={{display:"flex",flexDirection:"column",gap:8}}>
-                    {[1,2,3,4,5].map(sg=>(
-                      <div key={sg} style={{display:"flex",alignItems:"center",gap:10}}>
-                        <div style={{width:32,height:22,background:TIER_COLORS[sg],borderRadius:5,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:700,color:WHITE,flexShrink:0}}>SG{sg}</div>
-                        <div style={{fontSize:12,color:LABEL,flex:1}}>{SERVICE_GROUPS[sg]}</div>
-                        <div style={{display:"flex",alignItems:"center",gap:4,flexShrink:0}}>
-                          <span style={{fontSize:13,color:SECONDARY}}>$</span>
-                          <input type="number" className="rev-input" style={{width:80,fontSize:12,padding:"5px 8px"}}
-                            value={rev.sgRates[sg]}
-                            onChange={e=>{const r=[...rev.sgRates];r[sg]=parseFloat(e.target.value)||0;setRev(v=>({...v,sgRates:r}));}}
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* ── RIGHT: RESULTS ── */}
-              <div>
-                {revenueCalc ? <>
-
-                  {/* Summary KPIs */}
-                  <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:14}}>
-                    {[
-                      {
-                        icon:"💰", bg:"#F0FFF3", label:"FY26 Total Projected (incl. FIIE)",
-                        val:fmt(revenueCalc.fy26ProjectedWithFIIE),
-                        sub: revenueCalc.fy26ProjectedWithFIIE - rev.fy25SpedAllotment >= 0
-                          ? `▲ ${fmt(revenueCalc.fy26ProjectedWithFIIE - rev.fy25SpedAllotment)} vs FY25`
-                          : `▼ ${fmt(Math.abs(revenueCalc.fy26ProjectedWithFIIE - rev.fy25SpedAllotment))} vs FY25`,
-                        subColor: revenueCalc.fy26ProjectedWithFIIE - rev.fy25SpedAllotment >= 0 ? "#1C8C45" : RED,
-                      },
-                      {
-                        icon:"📈", bg:TEAL_LT, label:"FY27 Est. IOS (No Hold-Harmless)",
-                        val:fmt(revenueCalc.fy27Projected),
-                        sub: revenueCalc.deltaFY27>=0
-                          ? `▲ ${fmt(revenueCalc.deltaFY27)} vs FY25`
-                          : `▼ ${fmt(Math.abs(revenueCalc.deltaFY27))} vs FY25`,
-                        subColor: revenueCalc.deltaFY27>=0?"#1C8C45":RED,
-                      },
-                      {
-                        icon:"🎯", bg:"rgba(88,86,214,.08)", label:"IOS Tier Revenue",
-                        val:fmt(revenueCalc.tierRevenue),
-                        sub:`${revenueCalc.n} students · ${fmt(revenueCalc.perStudentAvg)}/student avg`,
-                        subColor:SECONDARY,
-                      },
-                      {
-                        icon:"🔗", bg:RED_LT, label:"Service Group Add-Ons",
-                        val:fmt(revenueCalc.sgRevenue),
-                        sub:`${students.filter(s=>s.sg>0).length} students w/ service groups`,
-                        subColor:SECONDARY,
-                      },
-                    ].map((k,i)=>(
-                      <div className="rev-kpi" key={i}>
-                        <div style={{width:32,height:32,borderRadius:8,background:k.bg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,marginBottom:10}}>{k.icon}</div>
-                        <div className="rev-kpi-label">{k.label}</div>
-                        <div className="rev-kpi-val">{k.val}</div>
-                        <div className="rev-kpi-sub" style={{color:k.subColor}}>{k.sub}</div>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* FIIE Allotment Card */}
-                  {revenueCalc.fiieTotal>0&&(
-                    <div style={{background:`linear-gradient(135deg,${BLUE_LT},rgba(50,173,230,.08))`,border:`1px solid rgba(0,113,227,.18)`,borderRadius:16,padding:20,marginBottom:14}}>
-                      <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12}}>
-                        <div style={{fontSize:22}}>📋</div>
-                        <div>
-                          <div style={{fontSize:14,fontWeight:600,color:LABEL,letterSpacing:"-.3px"}}>FIIE Allotment — TEC §48.159</div>
-                          <div style={{fontSize:12,color:SECONDARY}}>$1,000 per completed Full Individual &amp; Initial Evaluation · HB 2, SY2025–26+</div>
-                        </div>
-                      </div>
-                      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12}}>
-                        {[
-                          {label:"Public School FIIEs",val:rev.fiiePublicCount,sub:`${fmt(rev.fiiePublicCount*1000)}`},
-                          {label:"Private/Homeschool FIIEs",val:rev.fiiePrivateCount,sub:`${fmt(rev.fiiePrivateCount*1000)}`},
-                          {label:"Total FIIE Allotment",val:fmt(revenueCalc.fiieTotal),sub:`${rev.fiiePublicCount+rev.fiiePrivateCount} evaluations × $1,000`,bold:true},
-                        ].map((s,i)=>(
-                          <div key={i} style={{background:"rgba(255,255,255,.75)",borderRadius:10,padding:"10px 12px"}}>
-                            <div style={{fontSize:11,color:SECONDARY,marginBottom:4}}>{s.label}</div>
-                            <div style={{fontSize:s.bold?20:22,fontWeight:700,color:s.bold?BLUE:LABEL,letterSpacing:"-.5px"}}>{s.val}</div>
-                            <div style={{fontSize:11,color:SECONDARY,marginTop:2}}>{s.sub}</div>
-                          </div>
-                        ))}
-                      </div>
-                      <div style={{marginTop:12,fontSize:11,color:SECONDARY,lineHeight:1.5}}>
-                        Payments distributed via regular FSP installments throughout the school year. Reconciled at near-final settle-up in September using actual FIIE data reported to TSDS SPEDS Summer Submission (July).
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Under-scoring opportunity */}
-                  <div style={{background:`linear-gradient(135deg,${BLUE_LT},rgba(40,205,65,.08))`,border:`1px solid rgba(0,113,227,.15)`,borderRadius:16,padding:20,marginBottom:14}}>
-                    <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}>
-                      <div style={{fontSize:22}}>🔍</div>
-                      <div>
-                        <div style={{fontSize:14,fontWeight:600,color:LABEL,letterSpacing:"-.3px"}}>Under-Scoring Opportunity</div>
-                        <div style={{fontSize:12,color:SECONDARY}}>Estimated revenue left on the table due to IEP documentation gaps</div>
-                      </div>
-                    </div>
-                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:14,marginBottom:12}}>
-                      {[
-                        {label:"Students Likely Under-Scored",val:revenueCalc.underscoredStudents,color:ORANGE},
-                        {label:"Est. Revenue Opportunity",val:fmt(revenueCalc.underscoreOpportunity),color:BLUE},
-                        {label:"Avg Gain per Corrected Student",val:"$300",color:"#1C8C45"},
-                      ].map((s,i)=>(
-                        <div key={i} style={{background:"rgba(255,255,255,.7)",borderRadius:10,padding:"10px 12px"}}>
-                          <div style={{fontSize:11,color:SECONDARY,marginBottom:4}}>{s.label}</div>
-                          <div style={{fontSize:20,fontWeight:700,color:s.color,letterSpacing:"-.5px"}}>{s.val}</div>
-                        </div>
-                      ))}
-                    </div>
-                    <div style={{fontSize:12,color:SECONDARY,marginBottom:6}}>Opportunity as % of current IOS funding</div>
-                    <div className="opportunity-bar">
-                      <div className="opportunity-fill" style={{width:`${Math.min((revenueCalc.underscoreOpportunity/revenueCalc.totalIOS)*100,100)}%`}}/>
-                    </div>
-                    <div style={{fontSize:11,color:SECONDARY,marginTop:4}}>
-                      {revenueCalc.totalIOS>0?`${((revenueCalc.underscoreOpportunity/revenueCalc.totalIOS)*100).toFixed(1)}% of current projected IOS revenue`:"Enter students to calculate"}
-                    </div>
-                  </div>
-
-                  {/* Tier revenue breakdown */}
-                  <div className="card" style={{marginBottom:14}}>
-                    <div className="card-title">Revenue by Intensity Tier</div>
-                    <div className="card-sub">Tier allotment × student count · Sorted by contribution</div>
-                    <table className="rev-table">
-                      <thead><tr><th>Tier</th><th>Students</th><th>Rate/Student</th><th>Subtotal</th><th>% of Total</th></tr></thead>
-                      <tbody>
-                        {[...revenueCalc.tierBreakdown].sort((a,b)=>b.subtotal-a.subtotal).map((t,i)=>(
-                          <tr key={i}>
-                            <td><span style={{display:"inline-flex",alignItems:"center",justifyContent:"center",padding:"2px 9px",borderRadius:6,fontSize:11,fontWeight:600,color:WHITE,background:t.color}}>T{t.tier}</span></td>
-                            <td style={{fontWeight:600}}>{t.count}</td>
-                            <td className="mono">{fmt(t.rate)}</td>
-                            <td className="mono" style={{fontWeight:700,color:LABEL}}>{fmt(t.subtotal)}</td>
-                            <td>
-                              <div style={{display:"flex",alignItems:"center",gap:6}}>
-                                <div style={{flex:1,height:4,background:SEP,borderRadius:2,overflow:"hidden"}}>
-                                  <div style={{height:4,width:`${revenueCalc.tierRevenue>0?(t.subtotal/revenueCalc.tierRevenue*100):0}%`,background:t.color,borderRadius:2}}/>
-                                </div>
-                                <span style={{fontSize:11,color:SECONDARY,width:36,textAlign:"right"}}>
-                                  {revenueCalc.tierRevenue>0?(t.subtotal/revenueCalc.tierRevenue*100).toFixed(0):0}%
-                                </span>
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                        <tr style={{background:BG}}>
-                          <td style={{fontWeight:700}}>Total</td>
-                          <td style={{fontWeight:700}}>{revenueCalc.n}</td>
-                          <td className="mono">{fmt(revenueCalc.perStudentAvg)} avg</td>
-                          <td className="mono" style={{fontWeight:700,color:BLUE}}>{fmt(revenueCalc.tierRevenue)}</td>
-                          <td style={{fontSize:11,color:SECONDARY}}>100%</td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
-
-                  {/* SG breakdown */}
-                  {revenueCalc.sgBreakdown.length>0&&(
-                    <div className="card">
-                      <div className="card-title">Service Group Add-On Revenue</div>
-                      <div className="card-sub">Related services and 1:1 ratio add-ons</div>
-                      <table className="rev-table">
-                        <thead><tr><th>Service Group</th><th>Students</th><th>Add-On Rate</th><th>Subtotal</th></tr></thead>
-                        <tbody>
-                          {revenueCalc.sgBreakdown.map((s,i)=>(
-                            <tr key={i}>
-                              <td style={{fontSize:12}}>{s.label}</td>
-                              <td style={{fontWeight:600}}>{s.count}</td>
-                              <td className="mono">{fmt(s.rate)}</td>
-                              <td className="mono" style={{fontWeight:700,color:LABEL}}>{fmt(s.subtotal)}</td>
-                            </tr>
-                          ))}
-                          <tr style={{background:BG}}>
-                            <td style={{fontWeight:700}}>Total SG Add-Ons</td>
-                            <td style={{fontWeight:700}}>{students.filter(s=>s.sg>0).length}</td>
-                            <td/>
-                            <td className="mono" style={{fontWeight:700,color:BLUE}}>{fmt(revenueCalc.sgRevenue)}</td>
-                          </tr>
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-
-                  {/* Year-over-year summary */}
-                  <div style={{background:LABEL,borderRadius:16,padding:20,marginTop:14}}>
-                    <div style={{fontSize:13,fontWeight:600,color:"rgba(255,255,255,.5)",letterSpacing:".06em",textTransform:"uppercase",marginBottom:14}}>3-Year Funding Summary</div>
-                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:14}}>
-                      {[
-                        {year:"FY25 (Old Model)",val:rev.fy25SpedAllotment,note:"Instructional Arrangement",color:"rgba(255,255,255,.4)"},
-                        {year:"FY26 (Hold-Harmless + FIIE)",val:revenueCalc.fy26ProjectedWithFIIE,note:revenueCalc.fy26ProjectedWithFIIE-rev.fy25SpedAllotment>=0?`+${fmt(revenueCalc.fy26ProjectedWithFIIE-rev.fy25SpedAllotment)} vs FY25`:`${fmt(revenueCalc.fy26ProjectedWithFIIE-rev.fy25SpedAllotment)} vs FY25`,color:revenueCalc.fy26ProjectedWithFIIE-rev.fy25SpedAllotment>=0?"#34C759":"#FF6B6B"},
-                        {year:"FY27 (Full IOS, No Hold-Harmless)",val:revenueCalc.fy27Projected,note:revenueCalc.deltaFY27>=0?`+${fmt(revenueCalc.deltaFY27)} vs FY25`:`${fmt(revenueCalc.deltaFY27)} vs FY25`,color:revenueCalc.deltaFY27>=0?"#34C759":"#FF6B6B"},
-                      ].map((y,i)=>(
-                        <div key={i} style={{background:"rgba(255,255,255,.07)",borderRadius:12,padding:"14px 16px"}}>
-                          <div style={{fontSize:11,color:"rgba(255,255,255,.45)",marginBottom:6}}>{y.year}</div>
-                          <div style={{fontSize:22,fontWeight:700,color:WHITE,letterSpacing:"-.6px",lineHeight:1,marginBottom:4}}>{fmt(y.val)}</div>
-                          <div style={{fontSize:11,color:y.color,fontWeight:500}}>{y.note}</div>
-                        </div>
-                      ))}
-                    </div>
-                    {revenueCalc.fiieTotal>0&&(
-                      <div style={{marginTop:10,padding:"8px 12px",background:"rgba(255,255,255,.07)",borderRadius:8,fontSize:12,color:"rgba(255,255,255,.6)"}}>
-                        📋 FY26 includes {fmt(revenueCalc.fiieTotal)} FIIE allotment ({rev.fiiePublicCount+rev.fiiePrivateCount} evaluations × $1,000 per TEC §48.159)
-                      </div>
-                    )}
-                    <div style={{marginTop:12,fontSize:11,color:"rgba(255,255,255,.3)"}}>
-                      Estimates based on entered student data and adjustable tier/SG rates above. Actual allotments subject to TEA's final published IOS rates.
-                    </div>
-                  </div>
-
-                </>:(
-                  <div style={{background:WHITE,border:`1px solid ${SEP}`,borderRadius:16,padding:48,textAlign:"center"}}>
-                    <div style={{fontSize:40,marginBottom:12}}>💰</div>
-                    <div style={{fontSize:16,fontWeight:600,color:LABEL,marginBottom:6}}>No Data Yet</div>
-                    <div style={{fontSize:13,color:SECONDARY,marginBottom:16}}>Add students in the Students tab to generate revenue projections</div>
-                    <button onClick={()=>setActiveTab("students")} style={{background:BLUE,color:WHITE,border:"none",borderRadius:9,padding:"9px 22px",fontSize:13,fontWeight:600,cursor:"pointer",fontFamily:"inherit"}}>
-                      Add Students →
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-          </>}
-
-        </main>
-
-        {/* FOOTER */}
-        <footer className="ftr">
-          <div className="ftr-main">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Texas SPED Funding Intelligence</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif; background-color: #f5f5f7; color: #1d1d1f; }
+        .apple-card { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(20px); border-radius: 24px; border: 1px solid rgba(0,0,0,0.05); }
+        input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    </style>
+</head>
+<body class="p-4 md:p-10">
+    <div class="max-w-7xl mx-auto space-y-6">
+        <header class="flex flex-col md:flex-row justify-between items-center gap-4 bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
             <div>
-              <span className="ftr-brand" style={{color:LABEL,fontWeight:500}}>School Tools</span>
-              <div className="ftr-credit">SPED Funding Intelligence · HB 2 · Intensity of Services · FY2026–27</div>
+                <h1 class="text-3xl font-bold tracking-tight">Funding Intelligence</h1>
+                <p class="text-sm font-medium text-blue-600 uppercase tracking-widest">Intensity of Services (IOS) Dashboard</p>
             </div>
-          </div>
-        </footer>
+            <div class="flex items-center gap-4">
+                <div class="text-right px-4 border-r border-gray-100">
+                    <label class="block text-[10px] font-black text-gray-400 uppercase">District Enrollment</label>
+                    <input type="number" id="enrollment" value="1200" oninput="calculate()" class="w-20 font-bold outline-none text-blue-600 text-lg">
+                </div>
+                <select id="fiscalYear" onchange="calculate()" class="font-bold text-gray-700 outline-none cursor-pointer bg-gray-50 p-2 rounded-xl text-sm">
+                    <option value="ios">2026-27 (IOS Model)</option>
+                    <option value="old">2025-26 (Old Model)</option>
+                </select>
+            </div>
+        </header>
 
-      </div>
-    </>
-  );
-}
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="apple-card p-6 border-t-4 border-blue-500 text-center">
+                <p class="text-[10px] font-bold text-gray-400 uppercase mb-1">Total Est. Revenue</p>
+                <h2 id="totalRev" class="text-3xl font-bold">$0</h2>
+            </div>
+            <div class="apple-card p-6 border-t-4 border-green-500 text-center">
+                <p class="text-[10px] font-bold text-gray-400 uppercase mb-1">FIIE Allotment (§48.159)</p>
+                <h2 id="fiieVal" class="text-3xl font-bold text-green-600">$0</h2>
+            </div>
+            <div class="apple-card p-6 border-t-4 border-blue-400 text-center">
+                <p class="text-[10px] font-bold text-gray-400 uppercase mb-1">Revenue / Student</p>
+                <h2 id="perStudent" class="text-3xl font-bold text-blue-500">$0</h2>
+            </div>
+            <div class="apple-card p-6 border-t-4 border-slate-400 text-center">
+                <p class="text-[10px] font-bold text-gray-400 uppercase mb-1">Weighted FTE</p>
+                <h2 id="totalFTE" class="text-3xl font-bold text-slate-700">0.0</h2>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div class="lg:col-span-4 space-y-6">
+                <div class="apple-card p-8">
+                    <h3 class="text-lg font-bold mb-6">4-Factor Rubric (Factors A–D)</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Factor A: Tier 1 (1.15x)</label>
+                            <input type="number" id="fa" value="45" oninput="calculate()" class="w-full p-4 bg-gray-50 rounded-2xl border-none ring-1 ring-gray-100 focus:ring-2 focus:ring-blue-500 font-bold text-lg">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Factor B: Tier 2 (3.00x)</label>
+                            <input type="number" id="fb" value="15" oninput="calculate()" class="w-full p-4 bg-gray-50 rounded-2xl border-none ring-1 ring-gray-100 focus:ring-2 focus:ring-blue-500 font-bold text-lg">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Factor C: Intensive (6.00x)</label>
+                            <input type="number" id="fc" value="5" oninput="calculate()" class="w-full p-4 bg-gray-50 rounded-2xl border-none ring-1 ring-gray-100 focus:ring-2 focus:ring-blue-500 font-bold text-lg">
+                        </div>
+                        <div class="pt-4 border-t border-gray-100">
+                            <label class="block text-[10px] font-bold text-green-600 uppercase mb-1 tracking-widest">Factor D: FIIE Evaluations</label>
+                            <input type="number" id="fiieCount" value="20" oninput="calculate()" class="w-full p-4 bg-green-50 rounded-2xl border-none ring-1 ring-green-100 focus:ring-2 focus:ring-green-500 font-bold text-lg text-green-700">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="apple-card p-6 h-48">
+                    <p class="text-[10px] font-bold text-gray-400 uppercase mb-4">3-Year Trend Comparison</p>
+                    <canvas id="trendChart"></canvas>
+                </div>
+            </div>
+
+            <div class="lg:col-span-8 space-y-6">
+                <div class="apple-card p-8 min-h-[450px]">
+                    <h3 class="text-xl font-bold mb-8">Service Group Revenue Tracker (SG1–SG5)</h3>
+                    <div class="h-[350px]">
+                        <canvas id="revChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 md:grid-cols-5 gap-4 text-center">
+                    <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
+                        <p class="text-[9px] font-bold text-gray-400 uppercase">SG1</p>
+                        <p id="sg1" class="font-bold text-blue-600 text-sm">$0</p>
+                    </div>
+                    <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
+                        <p class="text-[9px] font-bold text-gray-400 uppercase">SG2</p>
+                        <p id="sg2" class="font-bold text-blue-600 text-sm">$0</p>
+                    </div>
+                    <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
+                        <p class="text-[9px] font-bold text-gray-400 uppercase">SG3</p>
+                        <p id="sg3" class="font-bold text-blue-600 text-sm">$0</p>
+                    </div>
+                    <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
+                        <p class="text-[9px] font-bold text-gray-400 uppercase">SG4</p>
+                        <p id="sg4" class="font-bold text-blue-600 text-sm">$0</p>
+                    </div>
+                    <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
+                        <p class="text-[9px] font-bold text-gray-400 uppercase">SG5</p>
+                        <p id="sg5" class="font-bold text-blue-600 text-sm">$0</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let mainChart, trendChart;
+        const basicAllotment = 6160;
+
+        function calculate() {
+            const enroll = parseFloat(document.getElementById('enrollment').value) || 0;
+            const fa = parseFloat(document.getElementById('fa').value) || 0;
+            const fb = parseFloat(document.getElementById('fb').value) || 0;
+            const fc = parseFloat(document.getElementById('fc').value) || 0;
+            const fiieCount = parseFloat(document.getElementById('fiieCount').value) || 0;
+            const year = document.getElementById('fiscalYear').value;
+
+            // Weights per Model Selection
+            const w1 = year === 'ios' ? 1.15 : 1.10;
+            const w2 = year === 'ios' ? 3.00 : 2.30;
+            const w3 = year === 'ios' ? 6.00 : 5.00;
+
+            const totalFTE = (fa * w1) + (fb * w2) + (fc * w3);
+            const coreRev = totalFTE * basicAllotment;
+            const fiieRev = fiieCount * 1000;
+            const total = coreRev + fiieRev;
+
+            document.getElementById('totalRev').innerText = '$' + Math.round(total).toLocaleString();
+            document.getElementById('fiieVal').innerText = '$' + Math.round(fiieRev).toLocaleString();
+            document.getElementById('totalFTE').innerText = totalFTE.toFixed(1);
+            document.getElementById('perStudent').innerText = enroll > 0 ? '$' + Math.round(total/enroll).toLocaleString() : '$0';
+
+            const sgData = [coreRev*0.4, coreRev*0.25, coreRev*0.15, coreRev*0.12, coreRev*0.08];
+            document.getElementById('sg1').innerText = '$' + Math.round(sgData[0]).toLocaleString();
+            document.getElementById('sg2').innerText = '$' + Math.round(sgData[1]).toLocaleString();
+            document.getElementById('sg3').innerText = '$' + Math.round(sgData[2]).toLocaleString();
+            document.getElementById('sg4').innerText = '$' + Math.round(sgData[3]).toLocaleString();
+            document.getElementById('sg5').innerText = '$' + Math.round(sgData[4]).toLocaleString();
+
+            updateCharts([...sgData, fiieRev], total);
+        }
+
+        function updateCharts(data, total) {
+            const ctx = document.getElementById('revChart').getContext('2d');
+            if (mainChart) mainChart.destroy();
+            mainChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['SG 1', 'SG 2', 'SG 3', 'SG 4', 'SG 5', 'FIIE'],
+                    datasets: [{
+                        data: data,
+                        backgroundColor: ['#0071e3', '#0071e3cc', '#0071e399', '#0071e366', '#0071e333', '#34c759'],
+                        borderRadius: 16,
+                        barThickness: 50
+                    }]
+                },
+                options: { 
+                    responsive: true, maintainAspectRatio: false, 
+                    plugins: { legend: { display: false } },
+                    scales: { y: { display: false }, x: { grid: { display: false } } }
+                }
+            });
+
+            const ttx = document.getElementById('trendChart').getContext('2d');
+            if (trendChart) trendChart.destroy();
+            trendChart = new Chart(ttx, {
+                type: 'line',
+                data: {
+                    labels: ['2024', '2025', '2026'],
+                    datasets: [{
+                        data: [total * 0.88, total * 0.94, total],
+                        borderColor: '#0071e3',
+                        borderWidth: 4,
+                        tension: 0.4,
+                        pointRadius: 0
+                    }]
+                },
+                options: { 
+                    responsive: true, maintainAspectRatio: false, 
+                    plugins: { legend: { display: false } },
+                    scales: { x: { display: false }, y: { display: false } }
+                }
+            });
+        }
+        window.onload = calculate;
+    </script>
+</body>
+</html>
