@@ -3,74 +3,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SPED Funding Intelligence</title>
+    <title>Texas SPED Funding Intelligence</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif; background-color: #f5f5f7; }
-        .apple-card { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(20px); border-radius: 24px; border: 1px solid rgba(0,0,0,0.05); transition: all 0.3s ease; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif; background-color: #f5f5f7; color: #1d1d1f; }
+        .glass-card { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(20px); border-radius: 24px; border: 1px solid rgba(0,0,0,0.05); }
     </style>
 </head>
 <body class="p-6 md:p-12">
     <div class="max-w-6xl mx-auto space-y-8">
-        <header class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <header class="flex justify-between items-end">
             <div>
-                <h1 class="text-4xl font-bold tracking-tight text-[#1d1d1f]">Funding Intelligence</h1>
-                <p class="text-sm font-medium text-[#86868b] mt-1">Official TEA-Aligned Calculation Platform</p>
+                <h1 class="text-4xl font-bold tracking-tight">Funding Intelligence</h1>
+                <p class="text-sm font-medium text-gray-500 mt-1">TEA-Aligned Platform • 2026-27 Model</p>
             </div>
-            <div class="flex items-center gap-4 bg-white p-2 rounded-2xl shadow-sm border border-gray-100">
-                <div class="px-4">
-                    <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest">Enrollment</label>
-                    <input type="number" id="enrollment" value="1250" oninput="calculate()" class="w-20 font-bold outline-none text-blue-600 bg-transparent text-lg">
-                </div>
-                <select id="model" onchange="calculate()" class="bg-gray-50 border-none rounded-xl px-4 py-2 font-semibold text-sm outline-none cursor-pointer">
-                    <option value="ios">2026-27 IOS Model</option>
-                    <option value="old">2025-26 Old Model</option>
-                </select>
+            <div class="text-right">
+                <label class="block text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">District Enrollment</label>
+                <input type="number" id="enrollment" value="1200" oninput="calculate()" class="bg-white border border-gray-200 rounded-xl px-4 py-2 font-bold text-blue-600 outline-none w-32 text-xl shadow-sm">
             </div>
         </header>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div class="apple-card p-8 shadow-sm">
-                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Total Revenue Estimate</p>
-                <h2 id="totalRev" class="text-4xl font-bold text-black">$0</h2>
+            <div class="glass-card p-8 shadow-sm">
+                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Total Est. Revenue</p>
+                <h2 id="totalRev" class="text-4xl font-bold">$0</h2>
             </div>
-            <div class="apple-card p-8 shadow-sm border-l-4 border-green-500">
+            <div class="glass-card p-8 shadow-sm border-b-4 border-green-500">
                 <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">FIIE Allotment (§48.159)</p>
                 <h2 id="fiieVal" class="text-4xl font-bold text-green-600">$0</h2>
             </div>
-            <div class="apple-card p-8 shadow-sm">
-                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Revenue Per Student</p>
+            <div class="glass-card p-8 shadow-sm">
+                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Avg. Revenue / Student</p>
                 <h2 id="perStudent" class="text-4xl font-bold text-blue-600">$0</h2>
             </div>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div class="apple-card p-8 lg:col-span-1 shadow-sm">
-                <h3 class="text-lg font-bold mb-6">4-Factor Rubric (IOS)</h3>
-                <div class="space-y-6 text-sm">
+            <div class="glass-card p-8 lg:col-span-1 shadow-sm">
+                <h3 class="text-lg font-bold mb-6">4-Factor Rubric (IOS Model)</h3>
+                <div class="space-y-5 text-sm">
                     <div>
                         <label class="block font-semibold mb-2">Factor A: Tier 1 (1.15x)</label>
-                        <input type="number" id="fa" value="25" oninput="calculate()" class="w-full p-3 bg-gray-50 rounded-xl border-none ring-1 ring-gray-100">
+                        <input type="number" id="fa" value="30" oninput="calculate()" class="w-full p-4 bg-gray-50 rounded-2xl border-none ring-1 ring-gray-200 focus:ring-2 focus:ring-blue-500 transition-all">
                     </div>
                     <div>
                         <label class="block font-semibold mb-2">Factor B: Tier 2 (3.00x)</label>
-                        <input type="number" id="fb" value="12" oninput="calculate()" class="w-full p-3 bg-gray-50 rounded-xl border-none ring-1 ring-gray-100">
+                        <input type="number" id="fb" value="15" oninput="calculate()" class="w-full p-4 bg-gray-50 rounded-2xl border-none ring-1 ring-gray-200 focus:ring-2 focus:ring-blue-500 transition-all">
                     </div>
                     <div>
                         <label class="block font-semibold mb-2">Factor C: Intensive (6.00x)</label>
-                        <input type="number" id="fc" value="4" oninput="calculate()" class="w-full p-3 bg-gray-50 rounded-xl border-none ring-1 ring-gray-100">
+                        <input type="number" id="fc" value="5" oninput="calculate()" class="w-full p-4 bg-gray-50 rounded-2xl border-none ring-1 ring-gray-200 focus:ring-2 focus:ring-blue-500 transition-all">
                     </div>
-                    <div>
-                        <label class="block font-semibold mb-2 italic text-green-600 font-bold text-xs uppercase">Annual FIIE Evaluations</label>
-                        <input type="number" id="fiieCount" value="15" oninput="calculate()" class="w-full p-3 bg-green-50 rounded-xl border-none ring-1 ring-green-100">
+                    <div class="pt-4 mt-4 border-t border-gray-100">
+                        <label class="block font-bold text-green-700 text-xs uppercase mb-2">FIIE Evaluations ($1,000/ea)</label>
+                        <input type="number" id="fiieCount" value="20" oninput="calculate()" class="w-full p-4 bg-green-50 rounded-2xl border-none ring-1 ring-green-200 focus:ring-2 focus:ring-green-500 transition-all">
                     </div>
                 </div>
             </div>
 
-            <div class="apple-card p-8 lg:col-span-2 shadow-sm flex flex-col">
-                <h3 class="text-lg font-bold mb-6">Service Group Comparison (SG1–SG5)</h3>
-                <div class="flex-grow min-h-[350px]">
+            <div class="glass-card p-8 lg:col-span-2 shadow-sm min-h-[450px] flex flex-col">
+                <h3 class="text-lg font-bold mb-6">Revenue Tracker & Service Groups</h3>
+                <div class="flex-grow">
                     <canvas id="revChart"></canvas>
                 </div>
             </div>
@@ -79,31 +73,25 @@
 
     <script>
         let chart;
-        const basicAllotment = 6160;
+        const ba = 6160;
 
         function calculate() {
             const enroll = parseFloat(document.getElementById('enrollment').value) || 0;
             const fa = parseFloat(document.getElementById('fa').value) || 0;
             const fb = parseFloat(document.getElementById('fb').value) || 0;
             const fc = parseFloat(document.getElementById('fc').value) || 0;
-            const fiie = parseFloat(document.getElementById('fiieCount').value) || 0;
-            const model = document.getElementById('model').value;
+            const fiieCount = parseFloat(document.getElementById('fiieCount').value) || 0;
 
-            // Weights based on Model Selection
-            const w1 = model === 'ios' ? 1.15 : 1.1;
-            const w2 = model === 'ios' ? 3.00 : 2.3;
-            const w3 = model === 'ios' ? 6.00 : 5.0;
-
-            const totalFTE = (fa * w1) + (fb * w2) + (fc * w3);
-            const fiieRev = fiie * 1000;
-            const coreRev = totalFTE * basicAllotment;
+            const totalFTE = (fa * 1.15) + (fb * 3.00) + (fc * 6.00);
+            const coreRev = totalFTE * ba;
+            const fiieRev = fiieCount * 1000;
             const total = coreRev + fiieRev;
 
-            document.getElementById('totalRev').innerText = '$' + total.toLocaleString();
-            document.getElementById('fiieVal').innerText = '$' + fiieRev.toLocaleString();
-            document.getElementById('perStudent').innerText = enroll > 0 ? '$' + (total/enroll).toFixed(2) : '$0';
+            document.getElementById('totalRev').innerText = '$' + Math.round(total).toLocaleString();
+            document.getElementById('fiieVal').innerText = '$' + Math.round(fiieRev).toLocaleString();
+            document.getElementById('perStudent').innerText = enroll > 0 ? '$' + Math.round(total/enroll).toLocaleString() : '$0';
 
-            updateChart([coreRev * 0.4, coreRev * 0.3, coreRev * 0.2, coreRev * 0.08, coreRev * 0.02, fiieRev]);
+            updateChart([coreRev * 0.45, coreRev * 0.30, coreRev * 0.15, coreRev * 0.07, coreRev * 0.03, fiieRev]);
         }
 
         function updateChart(data) {
@@ -112,19 +100,22 @@
             chart = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: ['SG1', 'SG2', 'SG3', 'SG4', 'SG5', 'FIIE'],
+                    labels: ['SG 1', 'SG 2', 'SG 3', 'SG 4', 'SG 5', 'FIIE Allotment'],
                     datasets: [{
                         data: data,
-                        backgroundColor: ['#0071e3', '#0071e3cc', '#0071e399', '#0071e366', '#0071e333', '#34c759'],
-                        borderRadius: 12,
-                        borderSkipped: false,
+                        backgroundColor: ['#0071e3', '#0071e3ee', '#0071e3cc', '#0071e3aa', '#0071e388', '#34c759'],
+                        borderRadius: 16,
+                        borderSkipped: false
                     }]
                 },
                 options: { 
                     responsive: true, 
                     maintainAspectRatio: false,
                     plugins: { legend: { display: false } },
-                    scales: { y: { beginAtZero: true, grid: { display: false } }, x: { grid: { display: false } } }
+                    scales: { 
+                        y: { beginAtZero: true, grid: { display: false }, ticks: { display: false } }, 
+                        x: { grid: { display: false } } 
+                    }
                 }
             });
         }
