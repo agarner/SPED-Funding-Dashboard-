@@ -1,45 +1,36 @@
-python3 << 'PYEOF'
-# Build index.html by wrapping the JSX in the HTML shell
-# Convert the React component export to a direct render call for the browser
-
-jsx = open("/mnt/user-data/outputs/SpedFundingDashboard.jsx").read()
-
-# Replace the export default with a direct render
-jsx_browser = jsx.replace(
-    "export default function SpedFundingDashboard()",
-    "function SpedFundingDashboard()"
-)
-
-# Append the render call if not already present
-if "ReactDOM.createRoot" not in jsx_browser:
-    jsx_browser += '\nReactDOM.createRoot(document.getElementById("root")).render(React.createElement(SpedFundingDashboard));\n'
-
-html = f"""<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SPED Funding Intelligence — School Tools</title>
-  <meta name="description" content="TEA-aligned SPED funding dashboard..." />
+  <title>SPED Funding Intelligence</title>
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <script src="https://unpkg.com/recharts@2.10.3/umd/Recharts.js"></script>
-  ...
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
+<body class="bg-gray-50">
   <div id="root"></div>
-<script type="text/babel" data-presets="react">
-const {{ useState, useMemo, useRef }} = React;
-const {{ BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer }} = Recharts;
+  <script type="text/babel" data-presets="react">
+    const { useState, useMemo } = React;
+    const { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } = Recharts;
 
-{jsx_browser}
-</script>
+    // --- PASTE YOUR DASHBOARD COMPONENT CODE BELOW THIS LINE ---
+    
+    function SpedFundingDashboard() {
+      return (
+        <div class="p-8">
+          <h1 class="text-2xl font-bold">Texas SPED Funding Dashboard</h1>
+          <p class="mt-4">Dashboard content loading...</p>
+        </div>
+      );
+    }
+
+    // --- PASTE YOUR DASHBOARD COMPONENT CODE ABOVE THIS LINE ---
+
+    const root = ReactDOM.createRoot(document.getElementById("root"));
+    root.render(<SpedFundingDashboard />);
+  </script>
 </body>
-</html>"""
-
-with open("/mnt/user-data/outputs/index.html", "w") as f:
-    f.write(html)
-
-print(f"Written: {len(html)} chars")
-PYEOF
+</html>
