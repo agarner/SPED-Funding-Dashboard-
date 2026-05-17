@@ -749,25 +749,23 @@ body {
 
 <!-- ── Navigation bar ── -->
 <div id="nav">
-  <button class="nbtn" id="prev" onclick="go(-1)" disabled>← Previous</button>
+  <button class="nbtn" id="prev" onclick="window.goPrev()" disabled="disabled">&#8592; Previous</button>
   <div style="display:flex;align-items:center;gap:4px;">
     <span id="counter">Slide 1 of 11</span>
-    <button id="ov-btn" onclick="openOv()">≡ All Slides</button>
+    <button id="ov-btn" onclick="window.openOv()">&#8801; All Slides</button>
   </div>
-  <button class="nbtn gold" id="next" onclick="go(1)">Next →</button>
+  <button class="nbtn gold" id="next" onclick="window.goNext()">Next &#8594;</button>
 </div>
 
 <!-- ── Overview panel ── -->
 <div id="ov-panel">
-  <button id="ov-close" onclick="closeOv()">✕</button>
+  <button id="ov-close" onclick="window.closeOv()">&#10005;</button>
   <h2>Jump to any slide</h2>
   <div class="ov-grid" id="ov-grid"></div>
 </div>
 
 <script>
-const slides = [...document.querySelectorAll('.slide')];
-const TOTAL  = slides.length;
-const TITLES = [
+var TITLES = [
   "Stop Reacting. Start Planning.",
   "Why Rural Budgeting Is Different",
   "Common Budget Challenges",
@@ -781,70 +779,64 @@ const TITLES = [
   "Closing"
 ];
 
-let cur = 0;
+var slideEls = document.getElementsByClassName('slide');
+var total    = slideEls.length;
+var cur      = 0;
 
-function store(v) { try { localStorage.setItem('ear-cur', v); } catch(e) {} }
-function load()   { try { return parseInt(localStorage.getItem('ear-cur') || '0'); } catch(e) { return 0; } }
-
-function render() {
-  document.getElementById('progress').style.width = ((cur + 1) / TOTAL * 100) + '%';
-  document.getElementById('counter').textContent = 'Slide ' + (cur + 1) + ' of ' + TOTAL;
-  document.getElementById('prev').disabled = cur === 0;
-  const nb = document.getElementById('next');
-  nb.disabled = false;
-  nb.textContent = cur === TOTAL - 1 ? 'Finish' : 'Next →';
-  store(cur);
-  document.querySelectorAll('.ov-item').forEach(function(el, i) {
-    el.classList.toggle('cur', i === cur);
-  });
+function update() {
+  document.getElementById('progress').style.width = (Math.round((cur + 1) / total * 100)) + '%';
+  document.getElementById('counter').textContent  = 'Slide ' + (cur + 1) + ' of ' + total;
+  document.getElementById('prev').disabled = (cur === 0);
+  document.getElementById('next').disabled = (cur === total - 1);
+  document.getElementById('next').textContent = (cur === total - 1) ? 'Finish' : 'Next →';
 }
 
-function goTo(idx, dir) {
-  if (idx < 0 || idx >= TOTAL) return;
-  const old = slides[cur];
-  old.classList.remove('active');
-  old.classList.add('exit-l');
-  setTimeout(() => old.classList.remove('exit-l'), 420);
-  cur = idx;
-  slides[cur].classList.add('active');
-  render();
+function goTo(n) {
+  if (n < 0 || n >= total) { return; }
+  slideEls[cur].className = slideEls[cur].className.replace(' active', '') + ' exit-l';
+  var leaving = slideEls[cur];
+  window.setTimeout(function() {
+    leaving.className = leaving.className.replace(' exit-l', '');
+  }, 420);
+  cur = n;
+  var arriving = slideEls[cur];
+  arriving.className = arriving.className.replace(' active', '').replace(' exit-l', '') + ' active';
+  update();
 }
 
-function go(d) { goTo(cur + d, d); }
-
-document.addEventListener('keydown', e => {
-  if (document.getElementById('ov-panel').classList.contains('open')) {
-    if (e.key === 'Escape') closeOv();
-    return;
-  }
-  if (['ArrowRight','ArrowDown',' '].includes(e.key)) { e.preventDefault(); go(1); }
-  else if (['ArrowLeft','ArrowUp'].includes(e.key))   { e.preventDefault(); go(-1); }
-  else if (e.key === 'Escape') openOv();
-});
+window.goNext  = function() { goTo(cur + 1); };
+window.goPrev  = function() { goTo(cur - 1); };
+window.openOv  = function() { buildOv(); document.getElementById('ov-panel').className += ' open'; };
+window.closeOv = function() { document.getElementById('ov-panel').className = document.getElementById('ov-panel').className.replace(' open', ''); };
+window.jumpTo  = function(n) { goTo(n); window.closeOv(); };
 
 function buildOv() {
   var g = document.getElementById('ov-grid');
   g.innerHTML = '';
-  TITLES.forEach(function(t, i) {
+  for (var i = 0; i < TITLES.length; i++) {
     var el = document.createElement('div');
     el.className = 'ov-item' + (i === cur ? ' cur' : '');
-    el.innerHTML = '<div class="n">Slide ' + (i + 1) + '</div><div class="ttl">' + t + '</div>';
-    (function(idx){ el.onclick = function() { goTo(idx, idx > cur ? 1 : -1); closeOv(); }; })(i);
+    el.setAttribute('onclick', 'window.jumpTo(' + i + ')');
+    el.innerHTML = '<div class="n">Slide ' + (i + 1) + '</div><div class="ttl">' + TITLES[i] + '</div>';
     g.appendChild(el);
-  });
+  }
 }
 
-function openOv()  { buildOv(); document.getElementById('ov-panel').classList.add('open'); }
-function closeOv() { document.getElementById('ov-panel').classList.remove('open'); }
+document.addEventListener('keydown', function(e) {
+  var key = e.key || e.keyCode;
+  var ovOpen = document.getElementById('ov-panel').className.indexOf('open') > -1;
+  if (ovOpen) {
+    if (key === 'Escape' || key === 27) { window.closeOv(); }
+    return;
+  }
+  if (key === 'ArrowRight' || key === 'ArrowDown' || key === ' ' || key === 39 || key === 40 || key === 32) {
+    e.preventDefault(); window.goNext();
+  } else if (key === 'ArrowLeft' || key === 'ArrowUp' || key === 37 || key === 38) {
+    e.preventDefault(); window.goPrev();
+  }
+});
 
-// Restore last position
-var saved = load();
-if (saved > 0 && saved < TOTAL) {
-  slides[0].classList.remove('active');
-  slides[saved].classList.add('active');
-  cur = saved;
-}
-render();
+update();
 </script>
 </body>
 </html>
