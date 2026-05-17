@@ -5,304 +5,204 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>EAR Budget Notebook | Rural District Budget Planning</title>
 <style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
+* { margin:0; padding:0; box-sizing:border-box; }
+:root { --navy:#1a3a5c; --teal:#2e7d8c; --amber:#e8a020; --light:#f5f7fa; --text:#2c3e50; --muted:#7f8c8d; }
 
-:root {
-  --navy: #1a3a5c;
-  --teal: #2e7d8c;
-  --amber: #e8a020;
-  --light: #f5f7fa;
-  --text: #2c3e50;
-  --muted: #7f8c8d;
-}
+body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; background:var(--navy); height:100vh; overflow:hidden; color:var(--text); }
 
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background: var(--navy);
-  height: 100vh;
-  overflow: hidden;
-  color: var(--text);
-}
+/* ── Zero-JS slide engine via :target ── */
+.slide { display:none; position:absolute; top:0; left:0; right:0; bottom:0; flex-direction:column; }
+#s1 { display:flex; }                   /* default: show slide 1 */
+.slide:target { display:flex; }         /* show whichever slide is in the URL hash */
+/* hide slide 1 when any other slide is targeted (Safari 15.4+ / Chrome 105+) */
+html:has(#s2:target,#s3:target,#s4:target,#s5:target,#s6:target,
+         #s7:target,#s8:target,#s9:target,#s10:target,#s11:target) #s1 { display:none; }
 
-/* ── Progress bar ── */
-#progress {
-  position: fixed; top: 0; left: 0; height: 4px;
-  background: var(--amber); transition: width 0.35s ease; z-index: 100;
-}
+/* ── Overview panel (also :target based) ── */
+#ov { display:none; position:fixed; top:0; left:0; right:0; bottom:0;
+      background:rgba(8,18,35,.97); z-index:300; flex-direction:column;
+      padding:44px; overflow-y:auto; position:relative; }
+#ov:target { display:flex; }
+/* hide slides when overview is targeted */
+html:has(#ov:target) .slide { display:none; }
 
-/* ── Slide engine ── */
-#deck { width: 100%; height: 100vh; position: relative; }
+/* ── Slide header ── */
+.s-head { background:var(--navy); color:white; padding:20px 48px;
+          display:flex; align-items:center; gap:14px; flex-shrink:0; position:relative; }
+.badge { background:var(--amber); color:var(--navy); font-weight:700; font-size:12px;
+         padding:3px 10px; border-radius:20px; white-space:nowrap; }
+.s-head h1 { font-size:22px; font-weight:700; letter-spacing:-.3px; }
+.pbar { position:absolute; bottom:0; left:0; height:3px; background:var(--amber); }
 
-.slide {
-  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-  display: flex; flex-direction: column;
-  opacity: 0; transform: translateX(56px);
-  transition: opacity 0.38s ease, transform 0.38s ease;
-  pointer-events: none;
-}
-.slide.active  { opacity: 1; transform: translateX(0);   pointer-events: all; }
-.slide.exit-l  { opacity: 0; transform: translateX(-56px); }
+/* ── Slide body ── */
+.s-body { flex:1; background:var(--light); padding:28px 48px 0; overflow-y:auto; }
 
-/* ── Shared header / body ── */
-.s-head {
-  background: var(--navy); color: white;
-  padding: 24px 48px;
-  display: flex; align-items: center; gap: 14px;
-  flex-shrink: 0;
-}
-.badge {
-  background: var(--amber); color: var(--navy);
-  font-weight: 700; font-size: 12px;
-  padding: 3px 10px; border-radius: 20px; white-space: nowrap;
-}
-.s-head h1 { font-size: 24px; font-weight: 700; letter-spacing: -.3px; }
-
-.s-body {
-  flex: 1; background: var(--light);
-  padding: 36px 48px 80px; overflow-y: auto;
-}
+/* ── Per-slide nav footer ── */
+.snav { flex-shrink:0; background:rgba(10,22,40,.96);
+        display:flex; align-items:center; justify-content:space-between; padding:12px 32px; }
+.snav-mid { display:flex; align-items:center; gap:12px; }
+.counter { color:rgba(255,255,255,.65); font-size:13.5px; }
+.nbtn { background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.2);
+        color:white; padding:9px 22px; border-radius:8px; font-size:13.5px;
+        font-weight:600; text-decoration:none; display:inline-block; transition:background .2s; }
+.nbtn:hover { background:rgba(255,255,255,.22); }
+.gold { background:var(--amber); border-color:var(--amber); color:var(--navy); }
+.gold:hover { background:#f0b030; }
+.dim { opacity:.3; pointer-events:none; cursor:default; }
+.ov-btn { background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.14);
+          color:rgba(255,255,255,.65); padding:6px 13px; border-radius:8px;
+          font-size:12px; text-decoration:none; transition:all .2s; display:inline-block; }
+.ov-btn:hover { background:rgba(255,255,255,.15); color:white; }
 
 /* ── Title slide ── */
-.slide-title-screen {
-  background: linear-gradient(135deg, #0f2440 0%, var(--navy) 55%, var(--teal) 100%);
-}
-.slide-title-screen .s-head { display: none; }
-.slide-title-screen .s-body {
-  background: transparent;
-  display: flex; flex-direction: column;
-  justify-content: center; align-items: center; text-align: center;
-  color: white; padding: 60px 60px 100px;
-}
-.t-eyebrow {
-  font-size: 13px; font-weight: 700; text-transform: uppercase;
-  letter-spacing: 2.5px; color: var(--amber); margin-bottom: 18px;
-}
-.t-main {
-  font-size: 58px; font-weight: 800; color: white;
-  line-height: 1.05; margin-bottom: 22px; letter-spacing: -1.5px;
-}
-.t-sub {
-  font-size: 19px; color: rgba(255,255,255,.72);
-  max-width: 580px; line-height: 1.55; margin-bottom: 40px;
-}
-.t-quote {
-  background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.2);
-  border-radius: 14px; padding: 20px 36px;
-  font-size: 17px; color: white; font-style: italic; max-width: 580px;
-}
+.slide-title { background:linear-gradient(135deg,#0f2440 0%,var(--navy) 55%,var(--teal) 100%); }
+.slide-title .s-body { background:transparent; display:flex; flex-direction:column;
+                        justify-content:center; align-items:center; text-align:center;
+                        color:white; padding:40px 60px 16px; }
+.t-eyebrow { font-size:13px; font-weight:700; text-transform:uppercase;
+             letter-spacing:2.5px; color:var(--amber); margin-bottom:16px; }
+.t-main { font-size:54px; font-weight:800; color:white;
+          line-height:1.05; margin-bottom:20px; letter-spacing:-1.5px; }
+.t-sub { font-size:18px; color:rgba(255,255,255,.72);
+         max-width:560px; line-height:1.55; margin-bottom:32px; }
+.t-quote { background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.2);
+           border-radius:14px; padding:18px 32px; font-size:16px;
+           color:white; font-style:italic; max-width:540px; }
 
 /* ── Closing slide ── */
-.slide-closing {
-  background: linear-gradient(135deg, #0a1828 0%, var(--navy) 50%, var(--teal) 100%);
-}
-.slide-closing .s-head { background: rgba(0,0,0,.25); }
-.slide-closing .s-head h1 { color: white; }
-.slide-closing .s-body {
-  background: transparent;
-  display: flex; flex-direction: column;
-  justify-content: center; align-items: center; text-align: center;
-  color: white; padding: 40px 60px 100px;
-}
-.c-quote {
-  font-size: 36px; font-weight: 800; color: white;
-  line-height: 1.18; margin-bottom: 32px; max-width: 680px;
-}
-.pillars {
-  display: flex; gap: 14px; flex-wrap: wrap;
-  justify-content: center; margin-bottom: 32px;
-}
-.pillar {
-  background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.22);
-  border-radius: 10px; padding: 13px 22px;
-  color: white; font-weight: 600; font-size: 15px;
-}
-.c-sub {
-  font-size: 18px; color: rgba(255,255,255,.72);
-  max-width: 540px; line-height: 1.55;
-}
+.slide-closing { background:linear-gradient(135deg,#0a1828 0%,var(--navy) 50%,var(--teal) 100%); }
+.slide-closing .s-head { background:rgba(0,0,0,.25); }
+.slide-closing .s-head h1 { color:white; }
+.slide-closing .s-body { background:transparent; display:flex; flex-direction:column;
+                          justify-content:center; align-items:center; text-align:center;
+                          color:white; padding:30px 60px 16px; }
+.c-quote { font-size:32px; font-weight:800; color:white;
+           line-height:1.18; margin-bottom:26px; max-width:640px; }
+.pillars { display:flex; gap:11px; flex-wrap:wrap; justify-content:center; margin-bottom:24px; }
+.pillar { background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.22);
+          border-radius:10px; padding:11px 18px; color:white; font-weight:600; font-size:14px; }
+.c-sub { font-size:16px; color:rgba(255,255,255,.72); max-width:500px; line-height:1.55; }
 
 /* ── Layout helpers ── */
-.col2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 6px; }
-.col3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 18px; margin-top: 6px; }
+.col2 { display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-top:6px; }
+.col3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; margin-top:6px; }
 
 /* ── Cards ── */
-.card {
-  background: white; border-radius: 12px;
-  padding: 22px 24px; box-shadow: 0 2px 10px rgba(0,0,0,.06);
-}
-.card.accent  { border-left: 4px solid var(--amber); }
-.card.primary { border-left: 4px solid var(--teal); }
-.card.span2   { grid-column: span 2; }
-.card.amber-top { border-top: 4px solid var(--amber); text-align: center; }
+.card { background:white; border-radius:12px; padding:18px 20px; box-shadow:0 2px 10px rgba(0,0,0,.06); }
+.card.accent  { border-left:4px solid var(--amber); }
+.card.primary { border-left:4px solid var(--teal); }
+.card.span2   { grid-column:span 2; }
+.card h3 { font-size:14px; font-weight:700; color:var(--navy); margin-bottom:9px; display:flex; align-items:center; gap:7px; }
+.card ul { list-style:none; }
+.card ul li { font-size:13px; color:var(--text); padding:4px 0 4px 14px; position:relative; line-height:1.5; }
+.card ul li::before { content:'▸'; color:var(--teal); position:absolute; left:0; font-size:10px; top:6px; }
+.card ul.two-col { display:grid; grid-template-columns:1fr 1fr; gap:0 14px; }
+.full-card { background:white; border-radius:12px; padding:20px 24px; box-shadow:0 2px 10px rgba(0,0,0,.06); margin-bottom:14px; }
+.full-card.hero { border-left:4px solid var(--amber); background:linear-gradient(to right,rgba(232,160,32,.05),white); }
+.full-card.center { text-align:center; border-top:4px solid var(--amber); margin-top:14px; padding:18px 24px; }
+.blist { list-style:none; }
+.blist li { padding:6px 0 6px 20px; position:relative; font-size:14px; line-height:1.5; border-bottom:1px solid rgba(0,0,0,.04); }
+.blist li:last-child { border-bottom:none; }
+.blist li::before { content:'◆'; color:var(--amber); position:absolute; left:0; font-size:9px; top:10px; }
+.label { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; color:var(--teal); margin-bottom:9px; }
 
-.card h3 {
-  font-size: 15px; font-weight: 700; color: var(--navy);
-  margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
-}
-.card ul { list-style: none; }
-.card ul li {
-  font-size: 13.5px; color: var(--text);
-  padding: 5px 0 5px 16px; position: relative; line-height: 1.5;
-}
-.card ul li::before {
-  content: '▸'; color: var(--teal);
-  position: absolute; left: 0; font-size: 11px; top: 7px;
-}
-.card ul.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 0 16px; }
+/* ── Framework ── */
+.fw-item { background:white; border-radius:12px; padding:15px 20px; margin-bottom:8px;
+           box-shadow:0 2px 8px rgba(0,0,0,.05); display:flex; gap:15px; align-items:flex-start; }
+.fw-letter { width:32px; height:32px; flex-shrink:0; background:var(--navy); color:white;
+             border-radius:8px; display:flex; align-items:center; justify-content:center;
+             font-weight:800; font-size:14px; }
+.fw-letter.gold { background:var(--amber); color:var(--navy); }
+.fw-content h4 { font-size:13.5px; font-weight:700; color:var(--navy); margin-bottom:3px; }
+.fw-content p  { font-size:12.5px; color:var(--muted); line-height:1.5; }
 
-.full-card {
-  background: white; border-radius: 12px;
-  padding: 24px 28px; box-shadow: 0 2px 10px rgba(0,0,0,.06);
-  margin-bottom: 16px;
-}
-.full-card.hero {
-  border-left: 4px solid var(--amber);
-  background: linear-gradient(to right, rgba(232,160,32,.05), white);
-}
-
-/* ── Bullet list ── */
-.blist { list-style: none; }
-.blist li {
-  padding: 8px 0 8px 22px; position: relative;
-  font-size: 14.5px; line-height: 1.5;
-  border-bottom: 1px solid rgba(0,0,0,.04);
-}
-.blist li:last-child { border-bottom: none; }
-.blist li::before {
-  content: '◆'; color: var(--amber);
-  position: absolute; left: 0; font-size: 9px; top: 12px;
-}
-
-/* ── Section label ── */
-.label {
-  font-size: 11px; font-weight: 700; text-transform: uppercase;
-  letter-spacing: 1.5px; color: var(--teal); margin-bottom: 12px;
-}
-
-/* ── Framework items ── */
-.fw-item {
-  background: white; border-radius: 12px;
-  padding: 18px 22px; margin-bottom: 10px;
-  box-shadow: 0 2px 8px rgba(0,0,0,.05);
-  display: flex; gap: 18px; align-items: flex-start;
-}
-.fw-letter {
-  width: 34px; height: 34px; flex-shrink: 0;
-  background: var(--navy); color: white; border-radius: 8px;
-  display: flex; align-items: center; justify-content: center;
-  font-weight: 800; font-size: 15px;
-}
-.fw-letter.gold { background: var(--amber); color: var(--navy); }
-.fw-content h4 { font-size: 14px; font-weight: 700; color: var(--navy); margin-bottom: 4px; }
-.fw-content p  { font-size: 13px; color: var(--muted); line-height: 1.5; }
-
-/* ── Stats row ── */
-.stat-row { display: flex; gap: 16px; margin-bottom: 20px; }
-.stat-box {
-  background: white; border-radius: 12px;
-  padding: 18px 20px; flex: 1; text-align: center;
-  box-shadow: 0 2px 8px rgba(0,0,0,.06);
-}
-.stat-box .icon { font-size: 28px; margin-bottom: 6px; }
-.stat-box .slabel { font-size: 12.5px; color: var(--muted); line-height: 1.4; }
+/* ── Stat boxes ── */
+.stat-row { display:flex; gap:13px; margin-bottom:16px; }
+.stat-box { background:white; border-radius:12px; padding:14px 16px; flex:1;
+            text-align:center; box-shadow:0 2px 8px rgba(0,0,0,.06); }
+.stat-box .icon  { font-size:24px; margin-bottom:4px; }
+.stat-box .slab  { font-size:11.5px; color:var(--muted); line-height:1.4; }
 
 /* ── Takeaway grid ── */
-.tgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
-.t-item {
-  background: white; border-radius: 12px;
-  padding: 18px 22px; box-shadow: 0 2px 8px rgba(0,0,0,.05);
-  display: flex; align-items: flex-start; gap: 14px;
-}
-.t-icon {
-  width: 40px; height: 40px; flex-shrink: 0; border-radius: 10px;
-  background: linear-gradient(135deg, var(--teal), var(--navy));
-  display: flex; align-items: center; justify-content: center; font-size: 18px;
-}
-.t-item h4 { font-size: 13.5px; font-weight: 700; color: var(--navy); margin-bottom: 4px; }
-.t-item p  { font-size: 12.5px; color: var(--muted); line-height: 1.4; }
+.tgrid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.t-item { background:white; border-radius:12px; padding:15px 18px;
+          box-shadow:0 2px 8px rgba(0,0,0,.05); display:flex; align-items:flex-start; gap:12px; }
+.t-icon { width:36px; height:36px; flex-shrink:0; border-radius:9px;
+          background:linear-gradient(135deg,var(--teal),var(--navy));
+          display:flex; align-items:center; justify-content:center; font-size:16px; }
+.t-item h4 { font-size:13px; font-weight:700; color:var(--navy); margin-bottom:3px; }
+.t-item p  { font-size:12px; color:var(--muted); line-height:1.4; }
 
-/* ── Navigation bar ── */
-#nav {
-  position: fixed; bottom: 0; left: 0; right: 0;
-  background: rgba(10,22,40,.96); backdrop-filter: blur(8px);
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 13px 32px; z-index: 50;
-}
-.nbtn {
-  background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.2);
-  color: white; padding: 9px 22px; border-radius: 8px;
-  cursor: pointer; font-size: 13.5px; font-weight: 600;
-  transition: background .2s; display: flex; align-items: center; gap: 6px;
-}
-.nbtn:hover:not(:disabled) { background: rgba(255,255,255,.2); }
-.nbtn:disabled { opacity: .3; cursor: not-allowed; }
-.nbtn.gold { background: var(--amber); border-color: var(--amber); color: var(--navy); }
-.nbtn.gold:hover:not(:disabled) { background: #f0b030; }
+/* ── Overview panel internals ── */
+#ov { position:relative; }
+.ov-x { position:absolute; top:20px; right:32px; color:rgba(255,255,255,.55);
+         font-size:26px; text-decoration:none; line-height:1; }
+.ov-x:hover { color:white; }
+#ov h2 { color:white; font-size:20px; margin-bottom:20px; }
+.ov-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:12px; }
+.ov-item { background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.12);
+           border-radius:10px; padding:14px 16px; text-decoration:none;
+           transition:all .2s; display:block; }
+.ov-item:hover { background:rgba(255,255,255,.15); border-color:var(--amber); }
+.ov-item .n   { font-size:10px; color:var(--amber); font-weight:700; margin-bottom:4px; text-transform:uppercase; }
+.ov-item .ttl { color:white; font-size:13px; font-weight:600; line-height:1.3; }
 
-#counter { color: rgba(255,255,255,.65); font-size: 13.5px; }
-
-#ov-btn {
-  background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.14);
-  color: rgba(255,255,255,.65); padding: 7px 14px; border-radius: 8px;
-  cursor: pointer; font-size: 12.5px; transition: all .2s; margin-left: 14px;
-}
-#ov-btn:hover { background: rgba(255,255,255,.15); color: white; }
-
-/* ── Overview panel ── */
-#ov-panel {
-  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(8,18,35,.97);
-  z-index: 200; display: none; flex-direction: column;
-  padding: 44px 44px 32px; overflow-y: auto;
-}
-#ov-panel.open { display: flex; }
-#ov-panel h2 { color: white; font-size: 20px; margin-bottom: 24px; }
-#ov-close {
-  position: absolute; top: 20px; right: 32px;
-  background: none; border: none; color: rgba(255,255,255,.55);
-  font-size: 28px; cursor: pointer; line-height: 1;
-}
-#ov-close:hover { color: white; }
-
-.ov-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
-.ov-item {
-  background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.12);
-  border-radius: 10px; padding: 16px 18px; cursor: pointer; transition: all .2s;
-}
-.ov-item:hover { background: rgba(255,255,255,.15); border-color: var(--amber); }
-.ov-item.cur  { border-color: var(--amber); background: rgba(232,160,32,.15); }
-.ov-item .n   { font-size: 10px; color: var(--amber); font-weight: 700; margin-bottom: 5px; text-transform: uppercase; }
-.ov-item .ttl { color: white; font-size: 13.5px; font-weight: 600; line-height: 1.3; }
-
-@media (max-width: 768px) {
-  .col2, .col3, .tgrid { grid-template-columns: 1fr; }
-  .card.span2 { grid-column: span 1; }
-  .t-main { font-size: 38px; }
-  .s-head { padding: 18px 20px; }
-  .s-body { padding: 24px 20px 80px; }
-  .stat-row { flex-wrap: wrap; }
+/* ── Responsive ── */
+@media(max-width:768px){
+  .col2,.col3,.tgrid { grid-template-columns:1fr; }
+  .card.span2 { grid-column:span 1; }
+  .t-main { font-size:36px; }
+  .s-head { padding:14px 20px; }
+  .s-body { padding:18px 18px 0; }
+  .stat-row { flex-wrap:wrap; }
+  .snav { padding:10px 16px; }
+  .nbtn { padding:8px 14px; font-size:12px; }
 }
 </style>
 </head>
 <body>
 
-<div id="progress"></div>
-
-<div id="deck">
+<!-- ══ Overview panel (zero-JS, :target based) ══ -->
+<div id="ov">
+  <a href="#s1" class="ov-x">&#10005;</a>
+  <h2>Jump to any slide</h2>
+  <div class="ov-grid">
+    <a href="#s1"  class="ov-item"><div class="n">Slide 1</div><div class="ttl">Stop Reacting. Start Planning.</div></a>
+    <a href="#s2"  class="ov-item"><div class="n">Slide 2</div><div class="ttl">Why Rural Budgeting Is Different</div></a>
+    <a href="#s3"  class="ov-item"><div class="n">Slide 3</div><div class="ttl">Common Budget Challenges</div></a>
+    <a href="#s4"  class="ov-item"><div class="n">Slide 4</div><div class="ttl">What Is the EAR Budget Notebook?</div></a>
+    <a href="#s5"  class="ov-item"><div class="n">Slide 5</div><div class="ttl">Core Benefits</div></a>
+    <a href="#s6"  class="ov-item"><div class="n">Slide 6</div><div class="ttl">Rural Budget Clarity Framework</div></a>
+    <a href="#s7"  class="ov-item"><div class="n">Slide 7</div><div class="ttl">How Technology Enhances the Process</div></a>
+    <a href="#s8"  class="ov-item"><div class="n">Slide 8</div><div class="ttl">Real Rural District Applications</div></a>
+    <a href="#s9"  class="ov-item"><div class="n">Slide 9</div><div class="ttl">Impact on District Culture</div></a>
+    <a href="#s10" class="ov-item"><div class="n">Slide 10</div><div class="ttl">What You'll Take Away Today</div></a>
+    <a href="#s11" class="ov-item"><div class="n">Slide 11</div><div class="ttl">Closing</div></a>
+  </div>
+</div>
 
 <!-- ══ SLIDE 1 — Title ══ -->
-<div class="slide slide-title-screen active" data-i="0">
+<div id="s1" class="slide slide-title">
   <div class="s-body">
-    <div class="t-eyebrow">EAR Budget Notebook · Rural District Planning</div>
+    <div class="t-eyebrow">EAR Budget Notebook &nbsp;·&nbsp; Rural District Planning</div>
     <div class="t-main">Stop Reacting.<br>Start Planning.</div>
     <div class="t-sub">Rural districts face real financial pressure. Fragmented budgeting makes it worse. There's a better way — and it starts with one organized system.</div>
     <div class="t-quote">"From survival budgeting to strategic leadership — one notebook at a time."</div>
   </div>
+  <div class="snav">
+    <span class="nbtn dim">&#8592; Previous</span>
+    <div class="snav-mid">
+      <span class="counter">Slide 1 of 11</span>
+      <a href="#ov" class="ov-btn">&#8801; All Slides</a>
+    </div>
+    <a href="#s2" class="nbtn gold">Next &#8594;</a>
+  </div>
 </div>
 
 <!-- ══ SLIDE 2 — Why Rural Is Different ══ -->
-<div class="slide" data-i="1">
+<div id="s2" class="slide">
   <div class="s-head">
+    <div class="pbar" style="width:18%"></div>
     <span class="badge">2 of 11</span>
     <h1>Why Rural District Budgeting Is Different</h1>
   </div>
@@ -320,11 +220,11 @@ body {
           </ul>
         </div>
       </div>
-      <div style="display:flex;flex-direction:column;gap:16px;">
+      <div style="display:flex;flex-direction:column;gap:13px;">
         <div>
           <div class="label">The Risk</div>
           <div class="card accent">
-            <h3>⚠️ One Unexpected Expense Can…</h3>
+            <h3>&#9888;&#65039; One Unexpected Expense Can…</h3>
             <ul>
               <li>Force mid-year staffing cuts</li>
               <li>Delay capital improvements for years</li>
@@ -336,7 +236,7 @@ body {
         <div>
           <div class="label">The Opportunity</div>
           <div class="card primary">
-            <h3>💡 Smaller Districts Can Move Faster</h3>
+            <h3>&#128161; Smaller Districts Can Move Faster</h3>
             <ul>
               <li>Leadership alignment is achievable</li>
               <li>Community connection supports transparency</li>
@@ -347,18 +247,27 @@ body {
       </div>
     </div>
   </div>
+  <div class="snav">
+    <a href="#s1" class="nbtn">&#8592; Previous</a>
+    <div class="snav-mid">
+      <span class="counter">Slide 2 of 11</span>
+      <a href="#ov" class="ov-btn">&#8801; All Slides</a>
+    </div>
+    <a href="#s3" class="nbtn gold">Next &#8594;</a>
+  </div>
 </div>
 
 <!-- ══ SLIDE 3 — Common Challenges ══ -->
-<div class="slide" data-i="2">
+<div id="s3" class="slide">
   <div class="s-head">
+    <div class="pbar" style="width:27%"></div>
     <span class="badge">3 of 11</span>
     <h1>Common Budget Challenges in Rural Districts</h1>
   </div>
   <div class="s-body">
     <div class="col3">
       <div class="card">
-        <h3>📊 Information Silos</h3>
+        <h3>&#128202; Information Silos</h3>
         <ul>
           <li>Data scattered across spreadsheets</li>
           <li>Departments working in isolation</li>
@@ -366,7 +275,7 @@ body {
         </ul>
       </div>
       <div class="card">
-        <h3>🔄 Reactive Decisions</h3>
+        <h3>&#128260; Reactive Decisions</h3>
         <ul>
           <li>Staffing decisions made under pressure</li>
           <li>No early-warning system for gaps</li>
@@ -374,7 +283,7 @@ body {
         </ul>
       </div>
       <div class="card">
-        <h3>🔍 Visibility Gaps</h3>
+        <h3>&#128269; Visibility Gaps</h3>
         <ul>
           <li>No real-time budget status view</li>
           <li>Finance and campuses disconnected</li>
@@ -382,7 +291,7 @@ body {
         </ul>
       </div>
       <div class="card">
-        <h3>📣 Communication Breakdown</h3>
+        <h3>&#128226; Communication Breakdown</h3>
         <ul>
           <li>Staff confusion on district priorities</li>
           <li>Community unclear on fund allocation</li>
@@ -390,7 +299,7 @@ body {
         </ul>
       </div>
       <div class="card">
-        <h3>📑 Grant Complexity</h3>
+        <h3>&#128209; Grant Complexity</h3>
         <ul>
           <li>ESSER replacement planning gaps</li>
           <li>Restricted fund tracking inconsistent</li>
@@ -398,7 +307,7 @@ body {
         </ul>
       </div>
       <div class="card">
-        <h3>👥 Staffing Uncertainty</h3>
+        <h3>&#128101; Staffing Uncertainty</h3>
         <ul>
           <li>Vacancies not tracked systematically</li>
           <li>Enrollment-to-staffing ratios unclear</li>
@@ -407,17 +316,26 @@ body {
       </div>
     </div>
   </div>
+  <div class="snav">
+    <a href="#s2" class="nbtn">&#8592; Previous</a>
+    <div class="snav-mid">
+      <span class="counter">Slide 3 of 11</span>
+      <a href="#ov" class="ov-btn">&#8801; All Slides</a>
+    </div>
+    <a href="#s4" class="nbtn gold">Next &#8594;</a>
+  </div>
 </div>
 
 <!-- ══ SLIDE 4 — What Is the EAR Budget Notebook ══ -->
-<div class="slide" data-i="3">
+<div id="s4" class="slide">
   <div class="s-head">
+    <div class="pbar" style="width:36%"></div>
     <span class="badge">4 of 11</span>
     <h1>What Is the EAR Budget Notebook?</h1>
   </div>
   <div class="s-body">
     <div class="full-card hero">
-      <p style="font-size:16px;line-height:1.65;color:var(--text);">A <strong>centralized budgeting and planning system</strong> designed for school districts — combining operational planning with financial transparency into a single source of truth for every stakeholder.</p>
+      <p style="font-size:15px;line-height:1.65;color:var(--text);">A <strong>centralized budgeting and planning system</strong> designed for school districts — combining operational planning with financial transparency into a single source of truth for every stakeholder.</p>
     </div>
     <div class="col2">
       <div>
@@ -435,7 +353,7 @@ body {
           </ul>
         </div>
       </div>
-      <div style="display:flex;flex-direction:column;gap:16px;">
+      <div style="display:flex;flex-direction:column;gap:13px;">
         <div>
           <div class="label">What It Replaces</div>
           <div class="card accent">
@@ -448,24 +366,33 @@ body {
           </div>
         </div>
         <div class="card primary">
-          <h3>🏆 The Core Promise</h3>
-          <p style="font-size:13.5px;color:var(--muted);line-height:1.5;">Superintendent, principals, finance office, and board all work from the same up-to-date information — every time.</p>
+          <h3>&#127942; The Core Promise</h3>
+          <p style="font-size:13px;color:var(--muted);line-height:1.5;">Superintendent, principals, finance office, and board all work from the same up-to-date information — every time.</p>
         </div>
       </div>
     </div>
   </div>
+  <div class="snav">
+    <a href="#s3" class="nbtn">&#8592; Previous</a>
+    <div class="snav-mid">
+      <span class="counter">Slide 4 of 11</span>
+      <a href="#ov" class="ov-btn">&#8801; All Slides</a>
+    </div>
+    <a href="#s5" class="nbtn gold">Next &#8594;</a>
+  </div>
 </div>
 
 <!-- ══ SLIDE 5 — Core Benefits ══ -->
-<div class="slide" data-i="4">
+<div id="s5" class="slide">
   <div class="s-head">
+    <div class="pbar" style="width:45%"></div>
     <span class="badge">5 of 11</span>
     <h1>Core Benefits for Rural School Districts</h1>
   </div>
   <div class="s-body">
     <div class="col2">
       <div class="card">
-        <h3>📁 Improves Organization</h3>
+        <h3>&#128193; Improves Organization</h3>
         <ul>
           <li>All budgeting documents in one structured system</li>
           <li>Eliminates duplicate work and lost information</li>
@@ -473,7 +400,7 @@ body {
         </ul>
       </div>
       <div class="card">
-        <h3>🎯 Supports Strategic Decisions</h3>
+        <h3>&#127919; Supports Strategic Decisions</h3>
         <ul>
           <li>Aligns spending with district goals</li>
           <li>Evaluate staffing impact before acting</li>
@@ -481,7 +408,7 @@ body {
         </ul>
       </div>
       <div class="card">
-        <h3>🔍 Increases Transparency</h3>
+        <h3>&#128269; Increases Transparency</h3>
         <ul>
           <li>Board-ready summaries always available</li>
           <li>Clear documentation of budget assumptions</li>
@@ -489,7 +416,7 @@ body {
         </ul>
       </div>
       <div class="card">
-        <h3>⏱️ Saves Time</h3>
+        <h3>&#9201;&#65039; Saves Time</h3>
         <ul>
           <li>Reduces manual spreadsheet management</li>
           <li>Streamlines meetings and revisions</li>
@@ -497,7 +424,7 @@ body {
         </ul>
       </div>
       <div class="card span2">
-        <h3>🤝 Builds Collaboration</h3>
+        <h3>&#129309; Builds Collaboration</h3>
         <ul class="two-col">
           <li>Campus and department input built into the process</li>
           <li>Shared ownership of financial decisions</li>
@@ -507,11 +434,20 @@ body {
       </div>
     </div>
   </div>
+  <div class="snav">
+    <a href="#s4" class="nbtn">&#8592; Previous</a>
+    <div class="snav-mid">
+      <span class="counter">Slide 5 of 11</span>
+      <a href="#ov" class="ov-btn">&#8801; All Slides</a>
+    </div>
+    <a href="#s6" class="nbtn gold">Next &#8594;</a>
+  </div>
 </div>
 
 <!-- ══ SLIDE 6 — Framework ══ -->
-<div class="slide" data-i="5">
+<div id="s6" class="slide">
   <div class="s-head">
+    <div class="pbar" style="width:55%"></div>
     <span class="badge">6 of 11</span>
     <h1>The Rural Budget Clarity Framework</h1>
   </div>
@@ -552,11 +488,20 @@ body {
       </div>
     </div>
   </div>
+  <div class="snav">
+    <a href="#s5" class="nbtn">&#8592; Previous</a>
+    <div class="snav-mid">
+      <span class="counter">Slide 6 of 11</span>
+      <a href="#ov" class="ov-btn">&#8801; All Slides</a>
+    </div>
+    <a href="#s7" class="nbtn gold">Next &#8594;</a>
+  </div>
 </div>
 
 <!-- ══ SLIDE 7 — Technology ══ -->
-<div class="slide" data-i="6">
+<div id="s7" class="slide">
   <div class="s-head">
+    <div class="pbar" style="width:64%"></div>
     <span class="badge">7 of 11</span>
     <h1>How Technology Enhances the Process</h1>
   </div>
@@ -586,23 +531,32 @@ body {
         </div>
       </div>
     </div>
-    <div class="full-card amber-top" style="margin-top:18px;">
-      <p style="font-size:15.5px;color:var(--text);line-height:1.6;">Technology doesn't replace judgment — it gives leaders the <strong>information they need</strong> to make better decisions, faster.</p>
+    <div class="full-card center">
+      <p style="font-size:15px;color:var(--text);line-height:1.6;">Technology doesn't replace judgment — it gives leaders the <strong>information they need</strong> to make better decisions, faster.</p>
     </div>
+  </div>
+  <div class="snav">
+    <a href="#s6" class="nbtn">&#8592; Previous</a>
+    <div class="snav-mid">
+      <span class="counter">Slide 7 of 11</span>
+      <a href="#ov" class="ov-btn">&#8801; All Slides</a>
+    </div>
+    <a href="#s8" class="nbtn gold">Next &#8594;</a>
   </div>
 </div>
 
 <!-- ══ SLIDE 8 — Real Applications ══ -->
-<div class="slide" data-i="7">
+<div id="s8" class="slide">
   <div class="s-head">
+    <div class="pbar" style="width:73%"></div>
     <span class="badge">8 of 11</span>
     <h1>Real Rural District Applications</h1>
   </div>
   <div class="s-body">
-    <div class="label">How different roles use the notebook</div>
+    <div class="label" style="margin-bottom:12px;">How different roles use the notebook</div>
     <div class="col2">
       <div class="card">
-        <h3>🏛️ Superintendent</h3>
+        <h3>&#127963;&#65039; Superintendent</h3>
         <ul>
           <li>Uses notebook during board workshops for live reference</li>
           <li>Walks trustees through assumptions with confidence</li>
@@ -610,7 +564,7 @@ body {
         </ul>
       </div>
       <div class="card">
-        <h3>🏫 Principals</h3>
+        <h3>&#127979; Principals</h3>
         <ul>
           <li>Submit staffing and campus requests via structured templates</li>
           <li>See campus-level budget allocations clearly</li>
@@ -618,7 +572,7 @@ body {
         </ul>
       </div>
       <div class="card">
-        <h3>💰 Business Office</h3>
+        <h3>&#128176; Business Office</h3>
         <ul>
           <li>Tracks grants and ESSER replacement strategies</li>
           <li>Maintains restricted fund compliance documentation</li>
@@ -626,7 +580,7 @@ body {
         </ul>
       </div>
       <div class="card">
-        <h3>👥 Leadership Team</h3>
+        <h3>&#128101; Leadership Team</h3>
         <ul>
           <li>Reviews budget assumptions together monthly</li>
           <li>Aligns spending decisions with strategic goals</li>
@@ -635,24 +589,33 @@ body {
       </div>
     </div>
   </div>
+  <div class="snav">
+    <a href="#s7" class="nbtn">&#8592; Previous</a>
+    <div class="snav-mid">
+      <span class="counter">Slide 8 of 11</span>
+      <a href="#ov" class="ov-btn">&#8801; All Slides</a>
+    </div>
+    <a href="#s9" class="nbtn gold">Next &#8594;</a>
+  </div>
 </div>
 
 <!-- ══ SLIDE 9 — Culture Impact ══ -->
-<div class="slide" data-i="8">
+<div id="s9" class="slide">
   <div class="s-head">
+    <div class="pbar" style="width:82%"></div>
     <span class="badge">9 of 11</span>
     <h1>Impact on District Culture</h1>
   </div>
   <div class="s-body">
     <div class="stat-row">
-      <div class="stat-box"><div class="icon">📉</div><div class="slabel">Less budget stress for leadership</div></div>
-      <div class="stat-box"><div class="icon">📈</div><div class="slabel">More confidence in financial decisions</div></div>
-      <div class="stat-box"><div class="icon">🤝</div><div class="slabel">Stronger community trust</div></div>
-      <div class="stat-box"><div class="icon">🎯</div><div class="slabel">Board discussions become strategic</div></div>
+      <div class="stat-box"><div class="icon">&#128201;</div><div class="slab">Less budget stress for leadership</div></div>
+      <div class="stat-box"><div class="icon">&#128200;</div><div class="slab">More confidence in financial decisions</div></div>
+      <div class="stat-box"><div class="icon">&#129309;</div><div class="slab">Stronger community trust</div></div>
+      <div class="stat-box"><div class="icon">&#127919;</div><div class="slab">Board discussions become strategic</div></div>
     </div>
     <div class="col2">
       <div class="card">
-        <h3>🌱 For Leaders</h3>
+        <h3>&#127807; For Leaders</h3>
         <ul>
           <li>Budgeting becomes collaborative, not stressful</li>
           <li>Confidence replaces anxiety in financial planning</li>
@@ -661,7 +624,7 @@ body {
         </ul>
       </div>
       <div class="card">
-        <h3>🏘️ For the Community</h3>
+        <h3>&#127960;&#65039; For the Community</h3>
         <ul>
           <li>Staff better understand district priorities</li>
           <li>Community trust increases through transparency</li>
@@ -671,53 +634,62 @@ body {
       </div>
     </div>
   </div>
+  <div class="snav">
+    <a href="#s8" class="nbtn">&#8592; Previous</a>
+    <div class="snav-mid">
+      <span class="counter">Slide 9 of 11</span>
+      <a href="#ov" class="ov-btn">&#8801; All Slides</a>
+    </div>
+    <a href="#s10" class="nbtn gold">Next &#8594;</a>
+  </div>
 </div>
 
 <!-- ══ SLIDE 10 — Takeaways ══ -->
-<div class="slide" data-i="9">
+<div id="s10" class="slide">
   <div class="s-head">
+    <div class="pbar" style="width:91%"></div>
     <span class="badge">10 of 11</span>
     <h1>What You'll Take Away Today</h1>
   </div>
   <div class="s-body">
     <div class="tgrid">
       <div class="t-item">
-        <div class="t-icon">🗺️</div>
+        <div class="t-icon">&#128506;</div>
         <div>
           <h4>Rural Budget Clarity Framework</h4>
           <p>A structured approach to organizing your district's budgeting process from start to finish</p>
         </div>
       </div>
       <div class="t-item">
-        <div class="t-icon">📓</div>
+        <div class="t-icon">&#128211;</div>
         <div>
           <h4>Sample Notebook Structure</h4>
           <p>A ready-to-adapt template for organizing revenue, staffing, grants, and board communication</p>
         </div>
       </div>
       <div class="t-item">
-        <div class="t-icon">📅</div>
+        <div class="t-icon">&#128197;</div>
         <div>
           <h4>Planning Calendar Ideas</h4>
           <p>Key milestones and timing for an annual budget cycle that keeps your team ahead of deadlines</p>
         </div>
       </div>
       <div class="t-item">
-        <div class="t-icon">🤝</div>
+        <div class="t-icon">&#129309;</div>
         <div>
           <h4>Collaboration Strategies</h4>
           <p>How to engage campus leaders and departments in the budget process meaningfully</p>
         </div>
       </div>
       <div class="t-item">
-        <div class="t-icon">📢</div>
+        <div class="t-icon">&#128226;</div>
         <div>
           <h4>Transparency Practices</h4>
           <p>Practical tools for presenting budgets to boards and communities in clear, accessible ways</p>
         </div>
       </div>
       <div class="t-item">
-        <div class="t-icon">💻</div>
+        <div class="t-icon">&#128187;</div>
         <div>
           <h4>Technology Integration Ideas</h4>
           <p>Realistic tech solutions for small districts — modern without overwhelming staff</p>
@@ -725,118 +697,42 @@ body {
       </div>
     </div>
   </div>
+  <div class="snav">
+    <a href="#s9" class="nbtn">&#8592; Previous</a>
+    <div class="snav-mid">
+      <span class="counter">Slide 10 of 11</span>
+      <a href="#ov" class="ov-btn">&#8801; All Slides</a>
+    </div>
+    <a href="#s11" class="nbtn gold">Next &#8594;</a>
+  </div>
 </div>
 
 <!-- ══ SLIDE 11 — Closing ══ -->
-<div class="slide slide-closing" data-i="10">
+<div id="s11" class="slide slide-closing">
   <div class="s-head">
+    <div class="pbar" style="width:100%"></div>
     <span class="badge">11 of 11</span>
     <h1>Closing</h1>
   </div>
   <div class="s-body">
     <div class="c-quote">"Clarity creates confidence.<br>Confidence creates stability."</div>
     <div class="pillars">
-      <div class="pillar">🎓 Student Opportunities</div>
-      <div class="pillar">👨‍🏫 Staff Stability</div>
-      <div class="pillar">🏘️ Community Trust</div>
-      <div class="pillar">📈 Long-Term Sustainability</div>
+      <div class="pillar">&#127891; Student Opportunities</div>
+      <div class="pillar">&#128104;&#8205;&#127979; Staff Stability</div>
+      <div class="pillar">&#127960;&#65039; Community Trust</div>
+      <div class="pillar">&#128200; Long-Term Sustainability</div>
     </div>
     <div class="c-sub">The EAR Budget Notebook helps rural districts move from managing crises to leading with purpose — one clear decision at a time.</div>
   </div>
-</div>
-
-</div><!-- #deck -->
-
-<!-- ── Navigation bar ── -->
-<div id="nav">
-  <button class="nbtn" id="prev" onclick="window.goPrev()" disabled="disabled">&#8592; Previous</button>
-  <div style="display:flex;align-items:center;gap:4px;">
-    <span id="counter">Slide 1 of 11</span>
-    <button id="ov-btn" onclick="window.openOv()">&#8801; All Slides</button>
+  <div class="snav">
+    <a href="#s10" class="nbtn">&#8592; Previous</a>
+    <div class="snav-mid">
+      <span class="counter">Slide 11 of 11</span>
+      <a href="#ov" class="ov-btn">&#8801; All Slides</a>
+    </div>
+    <span class="nbtn dim">Finish</span>
   </div>
-  <button class="nbtn gold" id="next" onclick="window.goNext()">Next &#8594;</button>
 </div>
 
-<!-- ── Overview panel ── -->
-<div id="ov-panel">
-  <button id="ov-close" onclick="window.closeOv()">&#10005;</button>
-  <h2>Jump to any slide</h2>
-  <div class="ov-grid" id="ov-grid"></div>
-</div>
-
-<script>
-var TITLES = [
-  "Stop Reacting. Start Planning.",
-  "Why Rural Budgeting Is Different",
-  "Common Budget Challenges",
-  "What Is the EAR Budget Notebook?",
-  "Core Benefits",
-  "Rural Budget Clarity Framework",
-  "How Technology Enhances the Process",
-  "Real Rural District Applications",
-  "Impact on District Culture",
-  "What You'll Take Away Today",
-  "Closing"
-];
-
-var slideEls = document.getElementsByClassName('slide');
-var total    = slideEls.length;
-var cur      = 0;
-
-function update() {
-  document.getElementById('progress').style.width = (Math.round((cur + 1) / total * 100)) + '%';
-  document.getElementById('counter').textContent  = 'Slide ' + (cur + 1) + ' of ' + total;
-  document.getElementById('prev').disabled = (cur === 0);
-  document.getElementById('next').disabled = (cur === total - 1);
-  document.getElementById('next').textContent = (cur === total - 1) ? 'Finish' : 'Next →';
-}
-
-function goTo(n) {
-  if (n < 0 || n >= total) { return; }
-  slideEls[cur].className = slideEls[cur].className.replace(' active', '') + ' exit-l';
-  var leaving = slideEls[cur];
-  window.setTimeout(function() {
-    leaving.className = leaving.className.replace(' exit-l', '');
-  }, 420);
-  cur = n;
-  var arriving = slideEls[cur];
-  arriving.className = arriving.className.replace(' active', '').replace(' exit-l', '') + ' active';
-  update();
-}
-
-window.goNext  = function() { goTo(cur + 1); };
-window.goPrev  = function() { goTo(cur - 1); };
-window.openOv  = function() { buildOv(); document.getElementById('ov-panel').className += ' open'; };
-window.closeOv = function() { document.getElementById('ov-panel').className = document.getElementById('ov-panel').className.replace(' open', ''); };
-window.jumpTo  = function(n) { goTo(n); window.closeOv(); };
-
-function buildOv() {
-  var g = document.getElementById('ov-grid');
-  g.innerHTML = '';
-  for (var i = 0; i < TITLES.length; i++) {
-    var el = document.createElement('div');
-    el.className = 'ov-item' + (i === cur ? ' cur' : '');
-    el.setAttribute('onclick', 'window.jumpTo(' + i + ')');
-    el.innerHTML = '<div class="n">Slide ' + (i + 1) + '</div><div class="ttl">' + TITLES[i] + '</div>';
-    g.appendChild(el);
-  }
-}
-
-document.addEventListener('keydown', function(e) {
-  var key = e.key || e.keyCode;
-  var ovOpen = document.getElementById('ov-panel').className.indexOf('open') > -1;
-  if (ovOpen) {
-    if (key === 'Escape' || key === 27) { window.closeOv(); }
-    return;
-  }
-  if (key === 'ArrowRight' || key === 'ArrowDown' || key === ' ' || key === 39 || key === 40 || key === 32) {
-    e.preventDefault(); window.goNext();
-  } else if (key === 'ArrowLeft' || key === 'ArrowUp' || key === 37 || key === 38) {
-    e.preventDefault(); window.goPrev();
-  }
-});
-
-update();
-</script>
 </body>
 </html>
