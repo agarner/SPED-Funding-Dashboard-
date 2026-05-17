@@ -172,6 +172,44 @@ html:has(#ov:target) .slide { display:none; }
   .snav { padding:10px 16px; }
   .nbtn { padding:8px 14px; font-size:12px; }
 }
+
+/* ── Print / Save as PDF ── */
+@media print {
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  @page { size: landscape; margin: 0; }
+
+  body { height: auto !important; overflow: visible !important; background: white !important; }
+
+  /* hide interactive chrome */
+  #ov  { display: none !important; }
+  .snav { display: none !important; }
+
+  /* stack slides vertically, one per page */
+  #deck { position: static !important; height: auto !important; }
+  .slide {
+    display: flex !important;
+    position: relative !important;
+    top: auto !important; left: auto !important; right: auto !important; bottom: auto !important;
+    width: 100% !important;
+    height: 100vh !important;
+    page-break-after: always !important;
+    break-after: page !important;
+    overflow: hidden !important;
+  }
+
+  /* give body back to s-body since nav is gone */
+  .s-body { padding-bottom: 24px !important; }
+
+  /* keep gradient backgrounds on title / closing slides */
+  .slide-title   { background: linear-gradient(135deg,#0f2440 0%,#1a3a5c 55%,#2e7d8c 100%) !important; }
+  .slide-closing { background: linear-gradient(135deg,#0a1828 0%,#1a3a5c 50%,#2e7d8c 100%) !important; }
+  .slide-title .s-body, .slide-closing .s-body { background: transparent !important; }
+
+  /* tighten font sizes slightly so content breathes on the page */
+  .s-head h1 { font-size: 19px !important; }
+  .card ul li, .blist li, .fw-content p { font-size: 12px !important; }
+  .t-main { font-size: 48px !important; }
+}
 </style>
 </head>
 <body>
