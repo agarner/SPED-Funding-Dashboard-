@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EAR Budget Notebook | Rural Empowerment Conference</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+:root { --navy:#1a3a5c; --teal:#2e7d8c; --amber:#e8a020; --light:#f5f7fa; --text:#2c3e50; --muted:#7f8c8d; }
+
+body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; background:var(--navy); height:100vh; overflow:hidden; color:var(--text); }
+
+/* ── Zero-JS slide engine via :target ── */
+.slide { display:none; position:absolute; top:0; left:0; right:0; bottom:0; flex-direction:column; }
+#s1 { display:flex; }
+.slide:target { display:flex; }
+html:has(#s2:target,#s3:target,#s4:target,#s5:target,#s6:target,#s7:target,
+         #s8:target,#s9:target,#s10:target,#s11:target,#s12:target,#s13:target) #s1 { display:none; }
+
+/* ── Overview panel ── */
+#ov { display:none; position:fixed; top:0; left:0; right:0; bottom:0;
+      background:rgba(8,18,35,.97); z-index:300; flex-direction:column;
+      padding:44px; overflow-y:auto; position:relative; }
+#ov:target { display:flex; }
+html:has(#ov:target) .slide { display:none; }
+
+/* ── Slide structure ── */
+.s-head { background:var(--navy); color:white; padding:20px 48px;
+          display:flex; align-items:center; gap:14px; flex-shrink:0; position:relative; }
+.badge { background:var(--amber); color:var(--navy); font-weight:700; font-size:12px;
+         padding:3px 10px; border-radius:20px; white-space:nowrap; }
+.s-head h1 { font-size:22px; font-weight:700; letter-spacing:-.3px; }
+.pbar { position:absolute; bottom:0; left:0; height:3px; background:var(--amber); }
+.s-body { flex:1; background:var(--light); padding:28px 48px 0; overflow-y:auto; }
+
+/* ── Nav footer ── */
+.snav { flex-shrink:0; background:rgba(10,22,40,.96);
+        display:flex; align-items:center; justify-content:space-between; padding:12px 32px; }
+.snav-mid { display:flex; align-items:center; gap:12px; }
+.counter { color:rgba(255,255,255,.65); font-size:13.5px; }
+.nbtn { background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.2);
+        color:white; padding:9px 22px; border-radius:8px; font-size:13.5px;
+        font-weight:600; text-decoration:none; display:inline-block; transition:background .2s; }
+.nbtn:hover { background:rgba(255,255,255,.22); }
+.gold { background:var(--amber); border-color:var(--amber); color:var(--navy); }
+.gold:hover { background:#f0b030; }
+.dim { opacity:.3; pointer-events:none; cursor:default; }
+.ov-btn { background:rgba(255,255,255,.07); border:1px solid rgba(255,255,255,.14);
+          color:rgba(255,255,255,.65); padding:6px 13px; border-radius:8px;
+          font-size:12px; text-decoration:none; transition:all .2s; display:inline-block; }
+.ov-btn:hover { background:rgba(255,255,255,.15); color:white; }
+
+/* ── Title slide ── */
+.slide-title { background:linear-gradient(135deg,#0f2440 0%,var(--navy) 55%,var(--teal) 100%); }
+.slide-title .s-body { background:transparent; display:flex; flex-direction:column;
+                        justify-content:center; align-items:center; text-align:center;
+                        color:white; padding:40px 60px 16px; }
+.t-eyebrow { font-size:12px; font-weight:700; text-transform:uppercase;
+             letter-spacing:2px; color:var(--amber); margin-bottom:16px; }
+.t-main { font-size:54px; font-weight:800; color:white;
+          line-height:1.05; margin-bottom:20px; letter-spacing:-1.5px; }
+.t-sub { font-size:17px; color:rgba(255,255,255,.72);
+         max-width:580px; line-height:1.55; margin-bottom:32px; }
+.t-quote { background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.2);
+           border-radius:14px; padding:18px 32px; font-size:16px;
+           color:white; font-style:italic; max-width:560px; }
+
+/* ── Closing slide ── */
+.slide-closing { background:linear-gradient(135deg,#0a1828 0%,var(--navy) 50%,var(--teal) 100%); }
+.slide-closing .s-head { background:rgba(0,0,0,.25); }
+.slide-closing .s-head h1 { color:white; }
+.slide-closing .s-body { background:transparent; display:flex; flex-direction:column;
+                          justify-content:center; align-items:center; text-align:center;
+                          color:white; padding:30px 60px 16px; }
+.c-quote { font-size:32px; font-weight:800; color:white;
+           line-height:1.18; margin-bottom:26px; max-width:640px; }
+.pillars { display:flex; gap:11px; flex-wrap:wrap; justify-content:center; margin-bottom:24px; }
+.pillar { background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.22);
+          border-radius:10px; padding:11px 18px; color:white; font-weight:600; font-size:14px; }
+.c-sub { font-size:16px; color:rgba(255,255,255,.72); max-width:520px; line-height:1.55; }
+
+/* ── Layout helpers ── */
+.col2 { display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-top:6px; }
+.col3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; margin-top:6px; }
+
+/* ── Cards ── */
+.card { background:white; border-radius:12px; padding:18px 20px; box-shadow:0 2px 10px rgba(0,0,0,.06); }
+.card.accent  { border-left:4px solid var(--amber); }
+.card.primary { border-left:4px solid var(--teal); }
+.card.span2   { grid-column:span 2; }
+.card h3 { font-size:14px; font-weight:700; color:var(--navy); margin-bottom:9px; display:flex; align-items:center; gap:7px; }
+.card ul { list-style:none; }
+.card ul li { font-size:13px; color:var(--text); padding:4px 0 4px 14px; position:relative; line-height:1.5; }
+.card ul li::before { content:'▸'; color:var(--teal); position:absolute; left:0; font-size:10px; top:6px; }
+.card ul.two-col { display:grid; grid-template-columns:1fr 1fr; gap:0 14px; }
+.full-card { background:white; border-radius:12px; padding:20px 24px; box-shadow:0 2px 10px rgba(0,0,0,.06); margin-bottom:14px; }
+.full-card.hero { border-left:4px solid var(--amber); background:linear-gradient(to right,rgba(232,160,32,.05),white); }
+.full-card.center { text-align:center; border-top:4px solid var(--amber); margin-top:14px; padding:18px 24px; }
+.blist { list-style:none; }
+.blist li { padding:6px 0 6px 20px; position:relative; font-size:14px; line-height:1.5; border-bottom:1px solid rgba(0,0,0,.04); }
+.blist li:last-child { border-bottom:none; }
+.blist li::before { content:'◆'; color:var(--amber); position:absolute; left:0; font-size:9px; top:10px; }
+.label { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; color:var(--teal); margin-bottom:9px; }
+
+/* ── Conference tag strip ── */
+.tag-row { display:flex; gap:10px; flex-wrap:wrap; margin-top:14px; }
+.tag { display:inline-block; padding:6px 14px; border-radius:20px; font-size:12px;
+       font-weight:700; background:rgba(46,125,140,.12); color:var(--teal); border:1px solid rgba(46,125,140,.25); }
+
+/* ── Framework ── */
+.fw-item { background:white; border-radius:12px; padding:15px 20px; margin-bottom:8px;
+           box-shadow:0 2px 8px rgba(0,0,0,.05); display:flex; gap:15px; align-items:flex-start; }
+.fw-letter { width:32px; height:32px; flex-shrink:0; background:var(--navy); color:white;
+             border-radius:8px; display:flex; align-items:center; justify-content:center;
+             font-weight:800; font-size:14px; }
+.fw-letter.gold { background:var(--amber); color:var(--navy); }
+.fw-content h4 { font-size:13.5px; font-weight:700; color:var(--navy); margin-bottom:3px; }
+.fw-content p  { font-size:12.5px; color:var(--muted); line-height:1.5; }
+
+/* ── Stat boxes ── */
+.stat-row { display:flex; gap:13px; margin-bottom:16px; }
+.stat-box { background:white; border-radius:12px; padding:14px 16px; flex:1;
+            text-align:center; box-shadow:0 2px 8px rgba(0,0,0,.06); }
+.stat-box .icon  { font-size:24px; margin-bottom:4px; }
+.stat-box .slab  { font-size:11.5px; color:var(--muted); line-height:1.4; }
+
+/* ── Community impact boxes ── */
+.impact-row { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:14px; }
+.impact-box { border-radius:12px; padding:20px 22px; }
+.impact-box.positive { background:rgba(46,125,140,.08); border:2px solid rgba(46,125,140,.3); }
+.impact-box.negative { background:rgba(232,160,32,.08); border:2px solid rgba(232,160,32,.3); }
+.impact-box h3 { font-size:14px; font-weight:700; margin-bottom:10px; }
+.impact-box.positive h3 { color:var(--teal); }
+.impact-box.negative h3 { color:#b07a10; }
+.impact-box ul { list-style:none; }
+.impact-box ul li { font-size:13px; padding:4px 0 4px 16px; position:relative; line-height:1.5; color:var(--text); }
+.impact-box.positive ul li::before { content:'✓'; color:var(--teal); position:absolute; left:0; font-size:12px; top:4px; }
+.impact-box.negative ul li::before { content:'✗'; color:#c0850e; position:absolute; left:0; font-size:12px; top:4px; }
+
+/* ── Takeaway grid ── */
+.tgrid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.t-item { background:white; border-radius:12px; padding:15px 18px;
+          box-shadow:0 2px 8px rgba(0,0,0,.05); display:flex; align-items:flex-start; gap:12px; }
+.t-icon { width:36px; height:36px; flex-shrink:0; border-radius:9px;
+          background:linear-gradient(135deg,var(--teal),var(--navy));
+          display:flex; align-items:center; justify-content:center; font-size:16px; }
+.t-item h4 { font-size:13px; font-weight:700; color:var(--navy); margin-bottom:3px; }
+.t-item p  { font-size:12px; color:var(--muted); line-height:1.4; }
+
+/* ── Overview panel ── */
+#ov { position:relative; }
+.ov-x { position:absolute; top:20px; right:32px; color:rgba(255,255,255,.55);
+         font-size:26px; text-decoration:none; line-height:1; }
+.ov-x:hover { color:white; }
+#ov h2 { color:white; font-size:20px; margin-bottom:20px; }
+.ov-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:12px; }
+.ov-item { background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.12);
+           border-radius:10px; padding:14px 16px; text-decoration:none;
+           transition:all .2s; display:block; }
+.ov-item:hover { background:rgba(255,255,255,.15); border-color:var(--amber); }
+.ov-item .n   { font-size:10px; color:var(--amber); font-weight:700; margin-bottom:4px; text-transform:uppercase; }
+.ov-item .ttl { color:white; font-size:13px; font-weight:600; line-height:1.3; }
+
+/* ── Responsive ── */
+@media(max-width:768px){
+  .col2,.col3,.tgrid,.impact-row { grid-template-columns:1fr; }
+  .card.span2 { grid-column:span 1; }
+  .t-main { font-size:36px; }
+  .s-head { padding:14px 20px; }
+  .s-body { padding:18px 18px 0; }
+  .stat-row { flex-wrap:wrap; }
+  .snav { padding:10px 16px; }
+  .nbtn { padding:8px 14px; font-size:12px; }
+}
+
+/* ── Print / Save as PDF ── */
+@media print {
+  * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  @page { size: landscape; margin: 0; }
+
+  body { height: auto !important; overflow: visible !important; background: white !important; }
+
+  /* hide interactive chrome */
+  #ov  { display: none !important; }
+  .snav { display: none !important; }
+
+  /* stack slides vertically, one per page */
+  #deck { position: static !important; height: auto !important; }
+  .slide {
+    display: flex !important;
+    position: relative !important;
+    top: auto !important; left: auto !important; right: auto !important; bottom: auto !important;
+    width: 100% !important;
+    height: 100vh !important;
+    page-break-after: always !important;
+    break-after: page !important;
+    overflow: hidden !important;
+  }
+
+  /* give body back to s-body since nav is gone */
+  .s-body { padding-bottom: 24px !important; }
+
+  /* keep gradient backgrounds on title / closing slides */
+  .slide-title   { background: linear-gradient(135deg,#0f2440 0%,#1a3a5c 55%,#2e7d8c 100%) !important; }
+  .slide-closing { background: linear-gradient(135deg,#0a1828 0%,#1a3a5c 50%,#2e7d8c 100%) !important; }
+  .slide-title .s-body, .slide-closing .s-body { background: transparent !important; }
+
+  /* tighten font sizes slightly so content breathes on the page */
+  .s-head h1 { font-size: 19px !important; }
+  .card ul li, .blist li, .fw-content p { font-size: 12px !important; }
+  .t-main { font-size: 48px !important; }
+}
+</style>
+</head>
+<body>
+
+<!-- ══ Overview Panel ══ -->
+<div id="ov">
+  <a href="#s1" class="ov-x">&#10005;</a>
+  <h2>Jump to any slide</h2>
+  <div class="ov-grid">
+    <a href="#s1"  class="ov-item"><div class="n">Slide 1</div><div class="ttl">Stop Reacting. Start Planning.</div></a>
+    <a href="#s2"  class="ov-item"><div class="n">Slide 2</div><div class="ttl">CEN &amp; Rural Empowerment Conference</div></a>
+    <a href="#s3"  class="ov-item"><div class="n">Slide 3</div><div class="ttl">Why Rural Budgeting Is Different</div></a>
+    <a href="#s4"  class="ov-item"><div class="n">Slide 4</div><div class="ttl">Common Budget Challenges</div></a>
+    <a href="#s5"  class="ov-item"><div class="n">Slide 5</div><div class="ttl">What Is the EAR Budget Notebook?</div></a>
+    <a href="#s6"  class="ov-item"><div class="n">Slide 6</div><div class="ttl">Core Benefits</div></a>
+    <a href="#s7"  class="ov-item"><div class="n">Slide 7</div><div class="ttl">Rural Budget Clarity Framework</div></a>
+    <a href="#s8"  class="ov-item"><div class="n">Slide 8</div><div class="ttl">How Technology Enhances the Process</div></a>
+    <a href="#s9"  class="ov-item"><div class="n">Slide 9</div><div class="ttl">Real Rural District Applications</div></a>
+    <a href="#s10" class="ov-item"><div class="n">Slide 10</div><div class="ttl">Impact on District Culture</div></a>
+    <a href="#s11" class="ov-item"><div class="n">Slide 11</div><div class="ttl">Schools &amp; Community Economic Vitality</div></a>
+    <a href="#s12" class="ov-item"><div class="n">Slide 12</div><div class="ttl">What You'll Take Away Today</div></a>
+    <a href="#s13" class="ov-item"><div class="n">Slide 13</div><div class="ttl">Closing</div></a>
+  </div>
+</div>
+
+<!-- ══ SLIDE 1 — Title ══ -->
+<div id="s1" class="slide slide-title">
+  <div class="s-body">
+    <div class="t-eyebrow">EAR Budget Notebook &nbsp;&#183;&nbsp; Rural Empowerment Conference &nbsp;&#183;&nbsp; Texas</div>
+    <div class="t-main">Stop Reacting.<br>Start Planning.</div>
+    <div class="t-sub">Texas rural districts face real financial pressure. Fragmented budgeting makes it worse. There's a better way — and it starts with one organized system.</div>
+    <div class="t-quote">"From survival budgeting to strategic leadership — one notebook at a time."</div>
+  </div>
+  <div class="snav">
+    <span class="nbtn dim">&#8592; Previous</span>
+    <div class="snav-mid">
+      <span class="counter">Slide 1 of 13</span>
+      <a href="#ov" class="ov-btn">&#8801; All Slides</a>
+    </div>
+    <a href="#s2" class="nbtn gold">Next &#8594;</a>
+  </div>
+</div>
+
+<!-- ══ SLIDE 2 — CEN & Rural Empowerment Conference ══ -->
+<div id="s2" class="slide">
+  <div class="s-head">
+    <div class="pbar" style="width:15%"></div>
+    <span class="badge">2 of 13</span>
+    <h1>CEN &amp; the Rural Empowerment Conference</h1>
+  </div>
+  <div class="s-body">
+    <div class="col2">
+      <div>
+        <div class="label">About Collegiate Edu-Nation (CEN)</div>
+        <div class="full-card hero">
+          <p style="font-size:14px;line-height:1.65;color:var(--text);margin-bottom:14px;">CEN's core belief: <strong>rural education and rural economic development are directly connected.</strong> Strong schools build strong communities.</p>
+          <ul class="blist">
+            <li>Workforce development &amp; career pathways</li>
+            <li>Postsecondary attainment in rural Texas</li>
+            <li>Rural advocacy and policy leadership</li>
+            <li>Community capacity-building</li>
+          </ul>
+        </div>
+        <div class="full-card center" style="margin-top:0;">
+          <p style="font-size:14.5px;color:var(--text);font-style:italic;">"Investing in the future of rural Texas" — through collaboration and innovation.</p>
+        </div>
+      </div>
+      <div>
+        <div class="label">Rural Empowerment Conference</div>
+        <div class="card" style="margin-bottom:13px;">
+          <h3>&#128101; Who's In the Room</h3>
+          <ul>
+            <li>Educators and school administrators</li>
+            <li>Workforce development leaders</li>
+            <li>Higher education partners</li>
+            <li>Policymakers</li>
+            <li>Community stakeholders</li>
+          </ul>
+        </div>
+        <div class="label">Conference Focus Areas</div>
+        <div class="tag-row">
+          <span class="tag">Workforce Development</span>
+          <span class="tag">Postsecondary Pathways</span>
+          <span class="tag">Community Partnerships</span>
+          <span class="tag">Economic Growth</span>
+          <span class="tag">Rural Advocacy</span>
+          <span class="tag">Sustainable School Systems</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="snav">
+    <a href="#s1" class="nbtn">&#8592; Previous</a>
+    <div class="snav-mid">
+      <span class="counter">Slide 2 of 13</span>
+      <a href="#ov" class="ov-btn">&#8801; All Slides</a>
+    </div>
+    <a href="#s3" class="nbtn gold">Next &#8594;</a>
+  </div>
+</div>
+
+<!-- ══ SLIDE 3 — Why Rural Is Different ══ -->
+<div id="s3" class="slide">
+  <div class="s-head">
+    <div class="pbar" style="width:23%"></div>
+    <span class="badge">3 of 13</span>
+    <h1>Why Rural District Budgeting Is Different</h1>
+  </div>
+  <div class="s-body">
+    <div class="col2">
+      <div>
+        <div class="label">The Texas Rural Reality</div>
+        <div class="full-card">
+          <ul class="blist">
+            <li>Small teams wear multiple hats — no dedicated budget analysts</li>
+            <li>Heavy dependence on ADA and state funding formulas</li>
+            <li>Limited local tax base restricts revenue flexibility</li>
+            <li>Enrollment shifts hit harder at smaller scale</li>
+            <li>Increasing operational costs with flat or declining state support</li>
+            <li>Community trust is fragile — and essential</li>
+          </ul>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:13px;">
+        <div>
+          <div class="label">The Risk</div>
+          <div class="card accent">
+            <h3>&#9888;&#65039; One Unexpected Expense Can…</h3>
+            <ul>
+              <li>Force mid-year staffing cuts</li>
+              <li>Delay capital improvements for years</li>
+              <li>Trigger state financial oversight</li>
+              <li>Undermine board and community confidence</li>
+            </ul>
+          </div>
+        </div>
+        <div>
+          <div class="label">The Opportunity</div>
+          <div class="card primary">
+            <h3>&#128161; Smaller Districts Can Move Faster</h3>
+            <ul>
+              <li>Leadership alignment is achievable</li>
+              <li>Community connection supports transparency</li>
+              <li>Change doesn't require a large bureaucracy</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="snav">
+    <a href="#s2" class="nbtn">&#8592; Previous</a>
+    <div class="snav-mid">
+      <span class="counter">Slide 3 of 13</span>
+      <a href="#ov" class="ov-btn">&#8801; All Slides</a>
+    </div>
+    <a href="#s4" class="nbtn gold">Next &#8594;</a>
+  </div>
+</div>
+
+<!-- ══ SLIDE 4 — Common Challenges ══ -->
+<div id="s4" class="slide">
+  <div class="s-head">
+    <div class="pbar" style="width:31%"></div>
+    <span class="badge">4 of 13</span>
+    <h1>Common Budget Challenges in Rural Districts</h1>
+  </div>
+  <div class="s-body">
+    <div class="col3">
+      <div class="card">
+        <h3>&#128202; Information Silos</h3>
+        <ul>
+          <li>Data scattered across spreadsheets</li>
+          <li>Departments working in isolation</li>
+          <li>No single source of truth</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>&#128260; Reactive Decisions</h3>
+        <ul>
+          <li>Staffing decisions made under pressure</li>
+          <li>No early-warning system for gaps</li>
+          <li>Grant deadlines missed or rushed</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>&#128269; Visibility Gaps</h3>
+        <ul>
+          <li>No real-time budget status view</li>
+          <li>Finance and campuses disconnected</li>
+          <li>Board overwhelmed by complex reports</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>&#128226; Communication Breakdown</h3>
+        <ul>
+          <li>Staff confusion on district priorities</li>
+          <li>Community unclear on fund allocation</li>
+          <li>Board discussions become reactive</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>&#128209; Grant Complexity</h3>
+        <ul>
+          <li>ESSER replacement planning gaps</li>
+          <li>Restricted fund tracking inconsistent</li>
+          <li>Compliance documentation scattered</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>&#128101; Staffing Uncertainty</h3>
+        <ul>
+          <li>Vacancies not tracked systematically</li>
+          <li>Enrollment-to-staffing ratios unclear</li>
+          <li>Program sustainability not modeled</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="snav">
+    <a href="#s3" class="nbtn">&#8592; Previous</a>
+    <div class="snav-mid">
+      <span class="counter">Slide 4 of 13</span>
+      <a href="#ov" class="ov-btn">&#8801; All Slides</a>
+    </div>
+    <a href="#s5" class="nbtn gold">Next &#8594;</a>
+  </div>
+</div>
+
+<!-- ══ SLIDE 5 — What Is the EAR Budget Notebook ══ -->
+<div id="s5" class="slide">
+  <div class="s-head">
+    <div class="pbar" style="width:38%"></div>
+    <span class="badge">5 of 13</span>
+    <h1>What Is the EAR Budget Notebook?</h1>
+  </div>
+  <div class="s-body">
+    <div class="full-card hero">
+      <p style="font-size:15px;line-height:1.65;color:var(--text);">A <strong>centralized budgeting and planning system</strong> designed for Texas school districts — combining operational planning with financial transparency into a single source of truth for every stakeholder.</p>
+    </div>
+    <div class="col2">
+      <div>
+        <div class="label">What It Organizes</div>
+        <div class="card">
+          <ul>
+            <li>Revenue projections &amp; enrollment forecasts</li>
+            <li>Staffing allocations and position tracking</li>
+            <li>Department budget requests</li>
+            <li>Grant tracking and compliance</li>
+            <li>Multi-year financial forecasting</li>
+            <li>Budget assumptions documentation</li>
+            <li>Planning calendars</li>
+            <li>Board communication materials</li>
+          </ul>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:13px;">
+        <div>
+          <div class="label">What It Replaces</div>
+          <div class="card accent">
+            <ul>
+              <li>Scattered spreadsheets across departments</li>
+              <li>Budget information siloed by role</li>
+              <li>Informal tracking in email threads</li>
+              <li>Manual report assembly for board meetings</li>
+            </ul>
+          </div>
+        </div>
+        <div class="card primary">
+          <h3>&#127942; The Core Promise</h3>
+          <p style="font-size:13px;color:var(--muted);line-height:1.5;">Superintendent, principals, finance office, and board all work from the same up-to-date information — every time.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="snav">
+    <a href="#s4" class="nbtn">&#8592; Previous</a>
+    <div class="snav-mid">
+      <span class="counter">Slide 5 of 13</span>
+      <a href="#ov" class="ov-btn">&#8801; All Slides</a>
+    </div>
+    <a href="#s6" class="nbtn gold">Next &#8594;</a>
+  </div>
+</div>
+
+<!-- ══ SLIDE 6 — Core Benefits ══ -->
+<div id="s6" class="slide">
+  <div class="s-head">
+    <div class="pbar" style="width:46%"></div>
+    <span class="badge">6 of 13</span>
+    <h1>Core Benefits for Rural School Districts</h1>
+  </div>
+  <div class="s-body">
+    <div class="col2">
+      <div class="card">
+        <h3>&#128193; Improves Organization</h3>
+        <ul>
+          <li>All budgeting documents in one structured system</li>
+          <li>Eliminates duplicate work and lost information</li>
+          <li>Creates consistency year to year</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>&#127919; Supports Strategic Decisions</h3>
+        <ul>
+          <li>Aligns spending with district goals</li>
+          <li>Evaluate staffing impact before acting</li>
+          <li>Model program sustainability over time</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>&#128269; Increases Transparency</h3>
+        <ul>
+          <li>Board-ready summaries always available</li>
+          <li>Clear documentation of budget assumptions</li>
+          <li>Better communication with staff and community</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>&#9201;&#65039; Saves Time</h3>
+        <ul>
+          <li>Reduces manual spreadsheet management</li>
+          <li>Streamlines meetings and revisions</li>
+          <li>Simplifies campus data collection</li>
+        </ul>
+      </div>
+      <div class="card span2">
+        <h3>&#129309; Builds Collaboration</h3>
+        <ul class="two-col">
+          <li>Campus and department input built into the process</li>
+          <li>Shared ownership of financial decisions</li>
+          <li>Finance and instructional leaders aligned</li>
+          <li>Reduces "finance vs. campus" friction</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="snav">
+    <a href="#s5" class="nbtn">&#8592; Previous</a>
+    <div class="snav-mid">
+      <span class="counter">Slide 6 of 13</span>
+      <a href="#ov" class="ov-btn">&#8801; All Slides</a>
+    </div>
+    <a href="#s7" class="nbtn gold">Next &#8594;</a>
+  </div>
+</div>
+
+<!-- ══ SLIDE 7 — Framework ══ -->
+<div id="s7" class="slide">
+  <div class="s-head">
+    <div class="pbar" style="width:54%"></div>
+    <span class="badge">7 of 13</span>
+    <h1>The Rural Budget Clarity Framework</h1>
+  </div>
+  <div class="s-body">
+    <div class="fw-item">
+      <div class="fw-letter">A</div>
+      <div class="fw-content">
+        <h4>Budget Planning Calendar</h4>
+        <p>Clear annual timeline for staffing projections, department submissions, revenue updates, board workshops, and community communication — so nothing falls through the cracks.</p>
+      </div>
+    </div>
+    <div class="fw-item">
+      <div class="fw-letter">B</div>
+      <div class="fw-content">
+        <h4>Revenue &amp; Enrollment Forecasting</h4>
+        <p>ADA trend tracking, scenario planning, state funding estimates, and property value monitoring to anticipate changes before they become crises.</p>
+      </div>
+    </div>
+    <div class="fw-item">
+      <div class="fw-letter">C</div>
+      <div class="fw-content">
+        <h4>Staffing Alignment Tools</h4>
+        <p>Position tracking, vacancy analysis, program staffing sustainability, and enrollment-to-staffing comparisons to support proactive decisions.</p>
+      </div>
+    </div>
+    <div class="fw-item">
+      <div class="fw-letter">D</div>
+      <div class="fw-content">
+        <h4>Priority-Based Budgeting</h4>
+        <p>Links every expenditure to student outcomes, district goals, strategic plans, and safety priorities — ensuring spending reflects district values.</p>
+      </div>
+    </div>
+    <div class="fw-item">
+      <div class="fw-letter gold">E</div>
+      <div class="fw-content">
+        <h4>Transparency &amp; Communication</h4>
+        <p>Board-ready summaries, community-friendly visuals, and simplified reporting tools that make financial information accessible to every stakeholder.</p>
+      </div>
+    </div>
+  </div>
+  <div class="snav">
+    <a href="#s6" class="nbtn">&#8592; Previous</a>
+    <div class="snav-mid">
+      <span class="counter">Slide 7 of 13</span>
+      <a href="#ov" class="ov-btn">&#8801; All Slides</a>
+    </div>
+    <a href="#s8" class="nbtn gold">Next &#8594;</a>
+  </div>
+</div>
+
+<!-- ══ SLIDE 8 — Technology ══ -->
+<div id="s8" class="slide">
+  <div class="s-head">
+    <div class="pbar" style="width:62%"></div>
+    <span class="badge">8 of 13</span>
+    <h1>How Technology Enhances the Process</h1>
+  </div>
+  <div class="s-body">
+    <div class="col2">
+      <div>
+        <div class="label">Tools That Help</div>
+        <div class="card primary">
+          <ul>
+            <li><strong>Digital notebooks</strong> — eliminate paper-heavy systems and version confusion</li>
+            <li><strong>Shared collaboration tools</strong> — everyone sees the same data in real time</li>
+            <li><strong>AI-assisted summaries</strong> — save administrative time on reports</li>
+            <li><strong>Automated templates</strong> — reduce human error in data entry</li>
+          </ul>
+        </div>
+      </div>
+      <div>
+        <div class="label">What Dashboard Views Reveal</div>
+        <div class="card accent">
+          <ul>
+            <li>Budget gaps before they become emergencies</li>
+            <li>Staffing concerns tied to enrollment shifts</li>
+            <li>Grant deadlines approaching</li>
+            <li>Funding risks on the horizon</li>
+            <li>Year-to-date spending vs. projections</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="full-card center">
+      <p style="font-size:15px;color:var(--text);line-height:1.6;">Technology doesn't replace judgment — it gives leaders the <strong>information they need</strong> to make better decisions, faster.</p>
+    </div>
+  </div>
+  <div class="snav">
+    <a href="#s7" class="nbtn">&#8592; Previous</a>
+    <div class="snav-mid">
+      <span class="counter">Slide 8 of 13</span>
+      <a href="#ov" class="ov-btn">&#8801; All Slides</a>
+    </div>
+    <a href="#s9" class="nbtn gold">Next &#8594;</a>
+  </div>
+</div>
+
+<!-- ══ SLIDE 9 — Real Applications ══ -->
+<div id="s9" class="slide">
+  <div class="s-head">
+    <div class="pbar" style="width:69%"></div>
+    <span class="badge">9 of 13</span>
+    <h1>Real Rural District Applications</h1>
+  </div>
+  <div class="s-body">
+    <div class="label" style="margin-bottom:12px;">How different roles use the notebook</div>
+    <div class="col2">
+      <div class="card">
+        <h3>&#127963;&#65039; Superintendent</h3>
+        <ul>
+          <li>Uses notebook during board workshops for live reference</li>
+          <li>Walks trustees through assumptions with confidence</li>
+          <li>Tracks multi-year projections monthly</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>&#127979; Principals</h3>
+        <ul>
+          <li>Submit staffing and campus requests via structured templates</li>
+          <li>See campus-level budget allocations clearly</li>
+          <li>Understand district priorities and constraints</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>&#128176; Business Office</h3>
+        <ul>
+          <li>Tracks grants and ESSER replacement strategies</li>
+          <li>Maintains restricted fund compliance documentation</li>
+          <li>Generates board-ready summaries quickly</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>&#128101; Leadership Team</h3>
+        <ul>
+          <li>Reviews budget assumptions together monthly</li>
+          <li>Aligns spending decisions with strategic goals</li>
+          <li>Creates consistent messaging for community stakeholders</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="snav">
+    <a href="#s8" class="nbtn">&#8592; Previous</a>
+    <div class="snav-mid">
+      <span class="counter">Slide 9 of 13</span>
+      <a href="#ov" class="ov-btn">&#8801; All Slides</a>
+    </div>
+    <a href="#s10" class="nbtn gold">Next &#8594;</a>
+  </div>
+</div>
+
+<!-- ══ SLIDE 10 — Culture Impact ══ -->
+<div id="s10" class="slide">
+  <div class="s-head">
+    <div class="pbar" style="width:77%"></div>
+    <span class="badge">10 of 13</span>
+    <h1>Impact on District Culture</h1>
+  </div>
+  <div class="s-body">
+    <div class="stat-row">
+      <div class="stat-box"><div class="icon">&#128201;</div><div class="slab">Less budget stress for leadership</div></div>
+      <div class="stat-box"><div class="icon">&#128200;</div><div class="slab">More confidence in financial decisions</div></div>
+      <div class="stat-box"><div class="icon">&#129309;</div><div class="slab">Stronger community trust</div></div>
+      <div class="stat-box"><div class="icon">&#127919;</div><div class="slab">Board discussions become strategic</div></div>
+    </div>
+    <div class="col2">
+      <div class="card">
+        <h3>&#127807; For Leaders</h3>
+        <ul>
+          <li>Budgeting becomes collaborative, not stressful</li>
+          <li>Confidence replaces anxiety in financial planning</li>
+          <li>Decisions are backed by data, not guesswork</li>
+          <li>Fewer surprises at board meetings</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>&#127960;&#65039; For the Community</h3>
+        <ul>
+          <li>Staff better understand district priorities</li>
+          <li>Community trust increases through transparency</li>
+          <li>Board meetings focus on strategy, not confusion</li>
+          <li>Families see how resources reach students</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="snav">
+    <a href="#s9" class="nbtn">&#8592; Previous</a>
+    <div class="snav-mid">
+      <span class="counter">Slide 10 of 13</span>
+      <a href="#ov" class="ov-btn">&#8801; All Slides</a>
+    </div>
+    <a href="#s11" class="nbtn gold">Next &#8594;</a>
+  </div>
+</div>
+
+<!-- ══ SLIDE 11 — Schools & Community Economic Vitality ══ -->
+<div id="s11" class="slide">
+  <div class="s-head">
+    <div class="pbar" style="width:85%"></div>
+    <span class="badge">11 of 13</span>
+    <h1>Schools &amp; Community Economic Vitality</h1>
+  </div>
+  <div class="s-body">
+    <div class="full-card hero">
+      <p style="font-size:15.5px;line-height:1.65;color:var(--text);">A strong rural school district often <strong>determines whether a rural community grows, stabilizes, or declines.</strong> The budget is not just a financial document — it is a community development tool.</p>
+    </div>
+    <div class="impact-row">
+      <div class="impact-box positive">
+        <h3>&#127807; When Schools Are Financially Strong</h3>
+        <ul>
+          <li>Communities retain families</li>
+          <li>Businesses stay and invest locally</li>
+          <li>Workforce talent remains in the region</li>
+          <li>Economic confidence grows</li>
+          <li>Future generations see opportunity at home</li>
+        </ul>
+      </div>
+      <div class="impact-box negative">
+        <h3>&#128201; When Schools Struggle Financially</h3>
+        <ul>
+          <li>Families relocate to find better options</li>
+          <li>Businesses lose confidence in the community</li>
+          <li>Workforce shrinks and talent leaves</li>
+          <li>Local economy feels the impact immediately</li>
+          <li>Recovery becomes increasingly difficult</li>
+        </ul>
+      </div>
+    </div>
+    <div class="full-card center">
+      <p style="font-size:14.5px;color:var(--text);line-height:1.6;">The EAR Budget Notebook supports the financial stability that keeps rural Texas communities <strong>strong, stable, and growing.</strong></p>
+    </div>
+  </div>
+  <div class="snav">
+    <a href="#s10" class="nbtn">&#8592; Previous</a>
+    <div class="snav-mid">
+      <span class="counter">Slide 11 of 13</span>
+      <a href="#ov" class="ov-btn">&#8801; All Slides</a>
+    </div>
+    <a href="#s12" class="nbtn gold">Next &#8594;</a>
+  </div>
+</div>
+
+<!-- ══ SLIDE 12 — Takeaways ══ -->
+<div id="s12" class="slide">
+  <div class="s-head">
+    <div class="pbar" style="width:92%"></div>
+    <span class="badge">12 of 13</span>
+    <h1>What You'll Take Away Today</h1>
+  </div>
+  <div class="s-body">
+    <div class="tgrid">
+      <div class="t-item">
+        <div class="t-icon">&#128506;</div>
+        <div>
+          <h4>Rural Budget Clarity Framework</h4>
+          <p>A structured approach to organizing your district's budgeting process from start to finish</p>
+        </div>
+      </div>
+      <div class="t-item">
+        <div class="t-icon">&#128211;</div>
+        <div>
+          <h4>Sample Notebook Structure</h4>
+          <p>A ready-to-adapt template for organizing revenue, staffing, grants, and board communication</p>
+        </div>
+      </div>
+      <div class="t-item">
+        <div class="t-icon">&#128197;</div>
+        <div>
+          <h4>Planning Calendar Ideas</h4>
+          <p>Key milestones and timing for an annual budget cycle that keeps your team ahead of deadlines</p>
+        </div>
+      </div>
+      <div class="t-item">
+        <div class="t-icon">&#129309;</div>
+        <div>
+          <h4>Collaboration Strategies</h4>
+          <p>How to engage campus leaders and departments in the budget process meaningfully</p>
+        </div>
+      </div>
+      <div class="t-item">
+        <div class="t-icon">&#128226;</div>
+        <div>
+          <h4>Transparency Practices</h4>
+          <p>Practical tools for presenting budgets to boards and communities in clear, accessible ways</p>
+        </div>
+      </div>
+      <div class="t-item">
+        <div class="t-icon">&#128187;</div>
+        <div>
+          <h4>Technology Integration Ideas</h4>
+          <p>Realistic tech solutions for small Texas districts — modern without overwhelming staff</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="snav">
+    <a href="#s11" class="nbtn">&#8592; Previous</a>
+    <div class="snav-mid">
+      <span class="counter">Slide 12 of 13</span>
+      <a href="#ov" class="ov-btn">&#8801; All Slides</a>
+    </div>
+    <a href="#s13" class="nbtn gold">Next &#8594;</a>
+  </div>
+</div>
+
+<!-- ══ SLIDE 13 — Closing ══ -->
+<div id="s13" class="slide slide-closing">
+  <div class="s-head">
+    <div class="pbar" style="width:100%"></div>
+    <span class="badge">13 of 13</span>
+    <h1>Closing</h1>
+  </div>
+  <div class="s-body">
+    <div class="c-quote">"Investing in the future of rural Texas starts with a plan you can trust."</div>
+    <div class="pillars">
+      <div class="pillar">&#127891; Student Opportunities</div>
+      <div class="pillar">&#128104;&#8205;&#127979; Staff Stability</div>
+      <div class="pillar">&#127960;&#65039; Community Trust</div>
+      <div class="pillar">&#128200; Long-Term Sustainability</div>
+      <div class="pillar">&#127807; Rural Economic Vitality</div>
+    </div>
+    <div class="c-sub">The EAR Budget Notebook helps rural Texas districts move from managing crises to leading with purpose — strengthening schools, communities, and the future of rural Texas.</div>
+  </div>
+  <div class="snav">
+    <a href="#s12" class="nbtn">&#8592; Previous</a>
+    <div class="snav-mid">
+      <span class="counter">Slide 13 of 13</span>
+      <a href="#ov" class="ov-btn">&#8801; All Slides</a>
+    </div>
+    <span class="nbtn dim">Finish</span>
+  </div>
+</div>
+
+</body>
+</html>
