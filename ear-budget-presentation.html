@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>EAR Budget Notebook | Rural District Budget Planning</title>
+<title>EAR Budget Notebook | Rural Empowerment Conference</title>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 :root { --navy:#1a3a5c; --teal:#2e7d8c; --amber:#e8a020; --light:#f5f7fa; --text:#2c3e50; --muted:#7f8c8d; }
@@ -12,32 +12,28 @@ body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif
 
 /* ── Zero-JS slide engine via :target ── */
 .slide { display:none; position:absolute; top:0; left:0; right:0; bottom:0; flex-direction:column; }
-#s1 { display:flex; }                   /* default: show slide 1 */
-.slide:target { display:flex; }         /* show whichever slide is in the URL hash */
-/* hide slide 1 when any other slide is targeted (Safari 15.4+ / Chrome 105+) */
-html:has(#s2:target,#s3:target,#s4:target,#s5:target,#s6:target,
-         #s7:target,#s8:target,#s9:target,#s10:target,#s11:target) #s1 { display:none; }
+#s1 { display:flex; }
+.slide:target { display:flex; }
+html:has(#s2:target,#s3:target,#s4:target,#s5:target,#s6:target,#s7:target,
+         #s8:target,#s9:target,#s10:target,#s11:target,#s12:target,#s13:target) #s1 { display:none; }
 
-/* ── Overview panel (also :target based) ── */
+/* ── Overview panel ── */
 #ov { display:none; position:fixed; top:0; left:0; right:0; bottom:0;
       background:rgba(8,18,35,.97); z-index:300; flex-direction:column;
       padding:44px; overflow-y:auto; position:relative; }
 #ov:target { display:flex; }
-/* hide slides when overview is targeted */
 html:has(#ov:target) .slide { display:none; }
 
-/* ── Slide header ── */
+/* ── Slide structure ── */
 .s-head { background:var(--navy); color:white; padding:20px 48px;
           display:flex; align-items:center; gap:14px; flex-shrink:0; position:relative; }
 .badge { background:var(--amber); color:var(--navy); font-weight:700; font-size:12px;
          padding:3px 10px; border-radius:20px; white-space:nowrap; }
 .s-head h1 { font-size:22px; font-weight:700; letter-spacing:-.3px; }
 .pbar { position:absolute; bottom:0; left:0; height:3px; background:var(--amber); }
-
-/* ── Slide body ── */
 .s-body { flex:1; background:var(--light); padding:28px 48px 0; overflow-y:auto; }
 
-/* ── Per-slide nav footer ── */
+/* ── Nav footer ── */
 .snav { flex-shrink:0; background:rgba(10,22,40,.96);
         display:flex; align-items:center; justify-content:space-between; padding:12px 32px; }
 .snav-mid { display:flex; align-items:center; gap:12px; }
@@ -59,15 +55,15 @@ html:has(#ov:target) .slide { display:none; }
 .slide-title .s-body { background:transparent; display:flex; flex-direction:column;
                         justify-content:center; align-items:center; text-align:center;
                         color:white; padding:40px 60px 16px; }
-.t-eyebrow { font-size:13px; font-weight:700; text-transform:uppercase;
-             letter-spacing:2.5px; color:var(--amber); margin-bottom:16px; }
+.t-eyebrow { font-size:12px; font-weight:700; text-transform:uppercase;
+             letter-spacing:2px; color:var(--amber); margin-bottom:16px; }
 .t-main { font-size:54px; font-weight:800; color:white;
           line-height:1.05; margin-bottom:20px; letter-spacing:-1.5px; }
-.t-sub { font-size:18px; color:rgba(255,255,255,.72);
-         max-width:560px; line-height:1.55; margin-bottom:32px; }
+.t-sub { font-size:17px; color:rgba(255,255,255,.72);
+         max-width:580px; line-height:1.55; margin-bottom:32px; }
 .t-quote { background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.2);
            border-radius:14px; padding:18px 32px; font-size:16px;
-           color:white; font-style:italic; max-width:540px; }
+           color:white; font-style:italic; max-width:560px; }
 
 /* ── Closing slide ── */
 .slide-closing { background:linear-gradient(135deg,#0a1828 0%,var(--navy) 50%,var(--teal) 100%); }
@@ -81,7 +77,7 @@ html:has(#ov:target) .slide { display:none; }
 .pillars { display:flex; gap:11px; flex-wrap:wrap; justify-content:center; margin-bottom:24px; }
 .pillar { background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.22);
           border-radius:10px; padding:11px 18px; color:white; font-weight:600; font-size:14px; }
-.c-sub { font-size:16px; color:rgba(255,255,255,.72); max-width:500px; line-height:1.55; }
+.c-sub { font-size:16px; color:rgba(255,255,255,.72); max-width:520px; line-height:1.55; }
 
 /* ── Layout helpers ── */
 .col2 { display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-top:6px; }
@@ -106,6 +102,11 @@ html:has(#ov:target) .slide { display:none; }
 .blist li::before { content:'◆'; color:var(--amber); position:absolute; left:0; font-size:9px; top:10px; }
 .label { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; color:var(--teal); margin-bottom:9px; }
 
+/* ── Conference tag strip ── */
+.tag-row { display:flex; gap:10px; flex-wrap:wrap; margin-top:14px; }
+.tag { display:inline-block; padding:6px 14px; border-radius:20px; font-size:12px;
+       font-weight:700; background:rgba(46,125,140,.12); color:var(--teal); border:1px solid rgba(46,125,140,.25); }
+
 /* ── Framework ── */
 .fw-item { background:white; border-radius:12px; padding:15px 20px; margin-bottom:8px;
            box-shadow:0 2px 8px rgba(0,0,0,.05); display:flex; gap:15px; align-items:flex-start; }
@@ -123,6 +124,19 @@ html:has(#ov:target) .slide { display:none; }
 .stat-box .icon  { font-size:24px; margin-bottom:4px; }
 .stat-box .slab  { font-size:11.5px; color:var(--muted); line-height:1.4; }
 
+/* ── Community impact boxes ── */
+.impact-row { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:14px; }
+.impact-box { border-radius:12px; padding:20px 22px; }
+.impact-box.positive { background:rgba(46,125,140,.08); border:2px solid rgba(46,125,140,.3); }
+.impact-box.negative { background:rgba(232,160,32,.08); border:2px solid rgba(232,160,32,.3); }
+.impact-box h3 { font-size:14px; font-weight:700; margin-bottom:10px; }
+.impact-box.positive h3 { color:var(--teal); }
+.impact-box.negative h3 { color:#b07a10; }
+.impact-box ul { list-style:none; }
+.impact-box ul li { font-size:13px; padding:4px 0 4px 16px; position:relative; line-height:1.5; color:var(--text); }
+.impact-box.positive ul li::before { content:'✓'; color:var(--teal); position:absolute; left:0; font-size:12px; top:4px; }
+.impact-box.negative ul li::before { content:'✗'; color:#c0850e; position:absolute; left:0; font-size:12px; top:4px; }
+
 /* ── Takeaway grid ── */
 .tgrid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
 .t-item { background:white; border-radius:12px; padding:15px 18px;
@@ -133,7 +147,7 @@ html:has(#ov:target) .slide { display:none; }
 .t-item h4 { font-size:13px; font-weight:700; color:var(--navy); margin-bottom:3px; }
 .t-item p  { font-size:12px; color:var(--muted); line-height:1.4; }
 
-/* ── Overview panel internals ── */
+/* ── Overview panel ── */
 #ov { position:relative; }
 .ov-x { position:absolute; top:20px; right:32px; color:rgba(255,255,255,.55);
          font-size:26px; text-decoration:none; line-height:1; }
@@ -149,7 +163,7 @@ html:has(#ov:target) .slide { display:none; }
 
 /* ── Responsive ── */
 @media(max-width:768px){
-  .col2,.col3,.tgrid { grid-template-columns:1fr; }
+  .col2,.col3,.tgrid,.impact-row { grid-template-columns:1fr; }
   .card.span2 { grid-column:span 1; }
   .t-main { font-size:36px; }
   .s-head { padding:14px 20px; }
@@ -162,60 +176,121 @@ html:has(#ov:target) .slide { display:none; }
 </head>
 <body>
 
-<!-- ══ Overview panel (zero-JS, :target based) ══ -->
+<!-- ══ Overview Panel ══ -->
 <div id="ov">
   <a href="#s1" class="ov-x">&#10005;</a>
   <h2>Jump to any slide</h2>
   <div class="ov-grid">
     <a href="#s1"  class="ov-item"><div class="n">Slide 1</div><div class="ttl">Stop Reacting. Start Planning.</div></a>
-    <a href="#s2"  class="ov-item"><div class="n">Slide 2</div><div class="ttl">Why Rural Budgeting Is Different</div></a>
-    <a href="#s3"  class="ov-item"><div class="n">Slide 3</div><div class="ttl">Common Budget Challenges</div></a>
-    <a href="#s4"  class="ov-item"><div class="n">Slide 4</div><div class="ttl">What Is the EAR Budget Notebook?</div></a>
-    <a href="#s5"  class="ov-item"><div class="n">Slide 5</div><div class="ttl">Core Benefits</div></a>
-    <a href="#s6"  class="ov-item"><div class="n">Slide 6</div><div class="ttl">Rural Budget Clarity Framework</div></a>
-    <a href="#s7"  class="ov-item"><div class="n">Slide 7</div><div class="ttl">How Technology Enhances the Process</div></a>
-    <a href="#s8"  class="ov-item"><div class="n">Slide 8</div><div class="ttl">Real Rural District Applications</div></a>
-    <a href="#s9"  class="ov-item"><div class="n">Slide 9</div><div class="ttl">Impact on District Culture</div></a>
-    <a href="#s10" class="ov-item"><div class="n">Slide 10</div><div class="ttl">What You'll Take Away Today</div></a>
-    <a href="#s11" class="ov-item"><div class="n">Slide 11</div><div class="ttl">Closing</div></a>
+    <a href="#s2"  class="ov-item"><div class="n">Slide 2</div><div class="ttl">CEN &amp; Rural Empowerment Conference</div></a>
+    <a href="#s3"  class="ov-item"><div class="n">Slide 3</div><div class="ttl">Why Rural Budgeting Is Different</div></a>
+    <a href="#s4"  class="ov-item"><div class="n">Slide 4</div><div class="ttl">Common Budget Challenges</div></a>
+    <a href="#s5"  class="ov-item"><div class="n">Slide 5</div><div class="ttl">What Is the EAR Budget Notebook?</div></a>
+    <a href="#s6"  class="ov-item"><div class="n">Slide 6</div><div class="ttl">Core Benefits</div></a>
+    <a href="#s7"  class="ov-item"><div class="n">Slide 7</div><div class="ttl">Rural Budget Clarity Framework</div></a>
+    <a href="#s8"  class="ov-item"><div class="n">Slide 8</div><div class="ttl">How Technology Enhances the Process</div></a>
+    <a href="#s9"  class="ov-item"><div class="n">Slide 9</div><div class="ttl">Real Rural District Applications</div></a>
+    <a href="#s10" class="ov-item"><div class="n">Slide 10</div><div class="ttl">Impact on District Culture</div></a>
+    <a href="#s11" class="ov-item"><div class="n">Slide 11</div><div class="ttl">Schools &amp; Community Economic Vitality</div></a>
+    <a href="#s12" class="ov-item"><div class="n">Slide 12</div><div class="ttl">What You'll Take Away Today</div></a>
+    <a href="#s13" class="ov-item"><div class="n">Slide 13</div><div class="ttl">Closing</div></a>
   </div>
 </div>
 
 <!-- ══ SLIDE 1 — Title ══ -->
 <div id="s1" class="slide slide-title">
   <div class="s-body">
-    <div class="t-eyebrow">EAR Budget Notebook &nbsp;·&nbsp; Rural District Planning</div>
+    <div class="t-eyebrow">EAR Budget Notebook &nbsp;&#183;&nbsp; Rural Empowerment Conference &nbsp;&#183;&nbsp; Texas</div>
     <div class="t-main">Stop Reacting.<br>Start Planning.</div>
-    <div class="t-sub">Rural districts face real financial pressure. Fragmented budgeting makes it worse. There's a better way — and it starts with one organized system.</div>
+    <div class="t-sub">Texas rural districts face real financial pressure. Fragmented budgeting makes it worse. There's a better way — and it starts with one organized system.</div>
     <div class="t-quote">"From survival budgeting to strategic leadership — one notebook at a time."</div>
   </div>
   <div class="snav">
     <span class="nbtn dim">&#8592; Previous</span>
     <div class="snav-mid">
-      <span class="counter">Slide 1 of 11</span>
+      <span class="counter">Slide 1 of 13</span>
       <a href="#ov" class="ov-btn">&#8801; All Slides</a>
     </div>
     <a href="#s2" class="nbtn gold">Next &#8594;</a>
   </div>
 </div>
 
-<!-- ══ SLIDE 2 — Why Rural Is Different ══ -->
+<!-- ══ SLIDE 2 — CEN & Rural Empowerment Conference ══ -->
 <div id="s2" class="slide">
   <div class="s-head">
-    <div class="pbar" style="width:18%"></div>
-    <span class="badge">2 of 11</span>
+    <div class="pbar" style="width:15%"></div>
+    <span class="badge">2 of 13</span>
+    <h1>CEN &amp; the Rural Empowerment Conference</h1>
+  </div>
+  <div class="s-body">
+    <div class="col2">
+      <div>
+        <div class="label">About Collegiate Edu-Nation (CEN)</div>
+        <div class="full-card hero">
+          <p style="font-size:14px;line-height:1.65;color:var(--text);margin-bottom:14px;">CEN's core belief: <strong>rural education and rural economic development are directly connected.</strong> Strong schools build strong communities.</p>
+          <ul class="blist">
+            <li>Workforce development &amp; career pathways</li>
+            <li>Postsecondary attainment in rural Texas</li>
+            <li>Rural advocacy and policy leadership</li>
+            <li>Community capacity-building</li>
+          </ul>
+        </div>
+        <div class="full-card center" style="margin-top:0;">
+          <p style="font-size:14.5px;color:var(--text);font-style:italic;">"Investing in the future of rural Texas" — through collaboration and innovation.</p>
+        </div>
+      </div>
+      <div>
+        <div class="label">Rural Empowerment Conference</div>
+        <div class="card" style="margin-bottom:13px;">
+          <h3>&#128101; Who's In the Room</h3>
+          <ul>
+            <li>Educators and school administrators</li>
+            <li>Workforce development leaders</li>
+            <li>Higher education partners</li>
+            <li>Policymakers</li>
+            <li>Community stakeholders</li>
+          </ul>
+        </div>
+        <div class="label">Conference Focus Areas</div>
+        <div class="tag-row">
+          <span class="tag">Workforce Development</span>
+          <span class="tag">Postsecondary Pathways</span>
+          <span class="tag">Community Partnerships</span>
+          <span class="tag">Economic Growth</span>
+          <span class="tag">Rural Advocacy</span>
+          <span class="tag">Sustainable School Systems</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="snav">
+    <a href="#s1" class="nbtn">&#8592; Previous</a>
+    <div class="snav-mid">
+      <span class="counter">Slide 2 of 13</span>
+      <a href="#ov" class="ov-btn">&#8801; All Slides</a>
+    </div>
+    <a href="#s3" class="nbtn gold">Next &#8594;</a>
+  </div>
+</div>
+
+<!-- ══ SLIDE 3 — Why Rural Is Different ══ -->
+<div id="s3" class="slide">
+  <div class="s-head">
+    <div class="pbar" style="width:23%"></div>
+    <span class="badge">3 of 13</span>
     <h1>Why Rural District Budgeting Is Different</h1>
   </div>
   <div class="s-body">
     <div class="col2">
       <div>
-        <div class="label">The Reality</div>
+        <div class="label">The Texas Rural Reality</div>
         <div class="full-card">
           <ul class="blist">
             <li>Small teams wear multiple hats — no dedicated budget analysts</li>
             <li>Heavy dependence on ADA and state funding formulas</li>
             <li>Limited local tax base restricts revenue flexibility</li>
-            <li>Enrollment swings hit harder at smaller scale</li>
+            <li>Enrollment shifts hit harder at smaller scale</li>
+            <li>Increasing operational costs with flat or declining state support</li>
             <li>Community trust is fragile — and essential</li>
           </ul>
         </div>
@@ -248,20 +323,20 @@ html:has(#ov:target) .slide { display:none; }
     </div>
   </div>
   <div class="snav">
-    <a href="#s1" class="nbtn">&#8592; Previous</a>
+    <a href="#s2" class="nbtn">&#8592; Previous</a>
     <div class="snav-mid">
-      <span class="counter">Slide 2 of 11</span>
+      <span class="counter">Slide 3 of 13</span>
       <a href="#ov" class="ov-btn">&#8801; All Slides</a>
     </div>
-    <a href="#s3" class="nbtn gold">Next &#8594;</a>
+    <a href="#s4" class="nbtn gold">Next &#8594;</a>
   </div>
 </div>
 
-<!-- ══ SLIDE 3 — Common Challenges ══ -->
-<div id="s3" class="slide">
+<!-- ══ SLIDE 4 — Common Challenges ══ -->
+<div id="s4" class="slide">
   <div class="s-head">
-    <div class="pbar" style="width:27%"></div>
-    <span class="badge">3 of 11</span>
+    <div class="pbar" style="width:31%"></div>
+    <span class="badge">4 of 13</span>
     <h1>Common Budget Challenges in Rural Districts</h1>
   </div>
   <div class="s-body">
@@ -317,25 +392,25 @@ html:has(#ov:target) .slide { display:none; }
     </div>
   </div>
   <div class="snav">
-    <a href="#s2" class="nbtn">&#8592; Previous</a>
+    <a href="#s3" class="nbtn">&#8592; Previous</a>
     <div class="snav-mid">
-      <span class="counter">Slide 3 of 11</span>
+      <span class="counter">Slide 4 of 13</span>
       <a href="#ov" class="ov-btn">&#8801; All Slides</a>
     </div>
-    <a href="#s4" class="nbtn gold">Next &#8594;</a>
+    <a href="#s5" class="nbtn gold">Next &#8594;</a>
   </div>
 </div>
 
-<!-- ══ SLIDE 4 — What Is the EAR Budget Notebook ══ -->
-<div id="s4" class="slide">
+<!-- ══ SLIDE 5 — What Is the EAR Budget Notebook ══ -->
+<div id="s5" class="slide">
   <div class="s-head">
-    <div class="pbar" style="width:36%"></div>
-    <span class="badge">4 of 11</span>
+    <div class="pbar" style="width:38%"></div>
+    <span class="badge">5 of 13</span>
     <h1>What Is the EAR Budget Notebook?</h1>
   </div>
   <div class="s-body">
     <div class="full-card hero">
-      <p style="font-size:15px;line-height:1.65;color:var(--text);">A <strong>centralized budgeting and planning system</strong> designed for school districts — combining operational planning with financial transparency into a single source of truth for every stakeholder.</p>
+      <p style="font-size:15px;line-height:1.65;color:var(--text);">A <strong>centralized budgeting and planning system</strong> designed for Texas school districts — combining operational planning with financial transparency into a single source of truth for every stakeholder.</p>
     </div>
     <div class="col2">
       <div>
@@ -373,20 +448,20 @@ html:has(#ov:target) .slide { display:none; }
     </div>
   </div>
   <div class="snav">
-    <a href="#s3" class="nbtn">&#8592; Previous</a>
+    <a href="#s4" class="nbtn">&#8592; Previous</a>
     <div class="snav-mid">
-      <span class="counter">Slide 4 of 11</span>
+      <span class="counter">Slide 5 of 13</span>
       <a href="#ov" class="ov-btn">&#8801; All Slides</a>
     </div>
-    <a href="#s5" class="nbtn gold">Next &#8594;</a>
+    <a href="#s6" class="nbtn gold">Next &#8594;</a>
   </div>
 </div>
 
-<!-- ══ SLIDE 5 — Core Benefits ══ -->
-<div id="s5" class="slide">
+<!-- ══ SLIDE 6 — Core Benefits ══ -->
+<div id="s6" class="slide">
   <div class="s-head">
-    <div class="pbar" style="width:45%"></div>
-    <span class="badge">5 of 11</span>
+    <div class="pbar" style="width:46%"></div>
+    <span class="badge">6 of 13</span>
     <h1>Core Benefits for Rural School Districts</h1>
   </div>
   <div class="s-body">
@@ -435,20 +510,20 @@ html:has(#ov:target) .slide { display:none; }
     </div>
   </div>
   <div class="snav">
-    <a href="#s4" class="nbtn">&#8592; Previous</a>
+    <a href="#s5" class="nbtn">&#8592; Previous</a>
     <div class="snav-mid">
-      <span class="counter">Slide 5 of 11</span>
+      <span class="counter">Slide 6 of 13</span>
       <a href="#ov" class="ov-btn">&#8801; All Slides</a>
     </div>
-    <a href="#s6" class="nbtn gold">Next &#8594;</a>
+    <a href="#s7" class="nbtn gold">Next &#8594;</a>
   </div>
 </div>
 
-<!-- ══ SLIDE 6 — Framework ══ -->
-<div id="s6" class="slide">
+<!-- ══ SLIDE 7 — Framework ══ -->
+<div id="s7" class="slide">
   <div class="s-head">
-    <div class="pbar" style="width:55%"></div>
-    <span class="badge">6 of 11</span>
+    <div class="pbar" style="width:54%"></div>
+    <span class="badge">7 of 13</span>
     <h1>The Rural Budget Clarity Framework</h1>
   </div>
   <div class="s-body">
@@ -489,20 +564,20 @@ html:has(#ov:target) .slide { display:none; }
     </div>
   </div>
   <div class="snav">
-    <a href="#s5" class="nbtn">&#8592; Previous</a>
+    <a href="#s6" class="nbtn">&#8592; Previous</a>
     <div class="snav-mid">
-      <span class="counter">Slide 6 of 11</span>
+      <span class="counter">Slide 7 of 13</span>
       <a href="#ov" class="ov-btn">&#8801; All Slides</a>
     </div>
-    <a href="#s7" class="nbtn gold">Next &#8594;</a>
+    <a href="#s8" class="nbtn gold">Next &#8594;</a>
   </div>
 </div>
 
-<!-- ══ SLIDE 7 — Technology ══ -->
-<div id="s7" class="slide">
+<!-- ══ SLIDE 8 — Technology ══ -->
+<div id="s8" class="slide">
   <div class="s-head">
-    <div class="pbar" style="width:64%"></div>
-    <span class="badge">7 of 11</span>
+    <div class="pbar" style="width:62%"></div>
+    <span class="badge">8 of 13</span>
     <h1>How Technology Enhances the Process</h1>
   </div>
   <div class="s-body">
@@ -536,20 +611,20 @@ html:has(#ov:target) .slide { display:none; }
     </div>
   </div>
   <div class="snav">
-    <a href="#s6" class="nbtn">&#8592; Previous</a>
+    <a href="#s7" class="nbtn">&#8592; Previous</a>
     <div class="snav-mid">
-      <span class="counter">Slide 7 of 11</span>
+      <span class="counter">Slide 8 of 13</span>
       <a href="#ov" class="ov-btn">&#8801; All Slides</a>
     </div>
-    <a href="#s8" class="nbtn gold">Next &#8594;</a>
+    <a href="#s9" class="nbtn gold">Next &#8594;</a>
   </div>
 </div>
 
-<!-- ══ SLIDE 8 — Real Applications ══ -->
-<div id="s8" class="slide">
+<!-- ══ SLIDE 9 — Real Applications ══ -->
+<div id="s9" class="slide">
   <div class="s-head">
-    <div class="pbar" style="width:73%"></div>
-    <span class="badge">8 of 11</span>
+    <div class="pbar" style="width:69%"></div>
+    <span class="badge">9 of 13</span>
     <h1>Real Rural District Applications</h1>
   </div>
   <div class="s-body">
@@ -590,20 +665,20 @@ html:has(#ov:target) .slide { display:none; }
     </div>
   </div>
   <div class="snav">
-    <a href="#s7" class="nbtn">&#8592; Previous</a>
+    <a href="#s8" class="nbtn">&#8592; Previous</a>
     <div class="snav-mid">
-      <span class="counter">Slide 8 of 11</span>
+      <span class="counter">Slide 9 of 13</span>
       <a href="#ov" class="ov-btn">&#8801; All Slides</a>
     </div>
-    <a href="#s9" class="nbtn gold">Next &#8594;</a>
+    <a href="#s10" class="nbtn gold">Next &#8594;</a>
   </div>
 </div>
 
-<!-- ══ SLIDE 9 — Culture Impact ══ -->
-<div id="s9" class="slide">
+<!-- ══ SLIDE 10 — Culture Impact ══ -->
+<div id="s10" class="slide">
   <div class="s-head">
-    <div class="pbar" style="width:82%"></div>
-    <span class="badge">9 of 11</span>
+    <div class="pbar" style="width:77%"></div>
+    <span class="badge">10 of 13</span>
     <h1>Impact on District Culture</h1>
   </div>
   <div class="s-body">
@@ -635,20 +710,67 @@ html:has(#ov:target) .slide { display:none; }
     </div>
   </div>
   <div class="snav">
-    <a href="#s8" class="nbtn">&#8592; Previous</a>
+    <a href="#s9" class="nbtn">&#8592; Previous</a>
     <div class="snav-mid">
-      <span class="counter">Slide 9 of 11</span>
+      <span class="counter">Slide 10 of 13</span>
       <a href="#ov" class="ov-btn">&#8801; All Slides</a>
     </div>
-    <a href="#s10" class="nbtn gold">Next &#8594;</a>
+    <a href="#s11" class="nbtn gold">Next &#8594;</a>
   </div>
 </div>
 
-<!-- ══ SLIDE 10 — Takeaways ══ -->
-<div id="s10" class="slide">
+<!-- ══ SLIDE 11 — Schools & Community Economic Vitality ══ -->
+<div id="s11" class="slide">
   <div class="s-head">
-    <div class="pbar" style="width:91%"></div>
-    <span class="badge">10 of 11</span>
+    <div class="pbar" style="width:85%"></div>
+    <span class="badge">11 of 13</span>
+    <h1>Schools &amp; Community Economic Vitality</h1>
+  </div>
+  <div class="s-body">
+    <div class="full-card hero">
+      <p style="font-size:15.5px;line-height:1.65;color:var(--text);">A strong rural school district often <strong>determines whether a rural community grows, stabilizes, or declines.</strong> The budget is not just a financial document — it is a community development tool.</p>
+    </div>
+    <div class="impact-row">
+      <div class="impact-box positive">
+        <h3>&#127807; When Schools Are Financially Strong</h3>
+        <ul>
+          <li>Communities retain families</li>
+          <li>Businesses stay and invest locally</li>
+          <li>Workforce talent remains in the region</li>
+          <li>Economic confidence grows</li>
+          <li>Future generations see opportunity at home</li>
+        </ul>
+      </div>
+      <div class="impact-box negative">
+        <h3>&#128201; When Schools Struggle Financially</h3>
+        <ul>
+          <li>Families relocate to find better options</li>
+          <li>Businesses lose confidence in the community</li>
+          <li>Workforce shrinks and talent leaves</li>
+          <li>Local economy feels the impact immediately</li>
+          <li>Recovery becomes increasingly difficult</li>
+        </ul>
+      </div>
+    </div>
+    <div class="full-card center">
+      <p style="font-size:14.5px;color:var(--text);line-height:1.6;">The EAR Budget Notebook supports the financial stability that keeps rural Texas communities <strong>strong, stable, and growing.</strong></p>
+    </div>
+  </div>
+  <div class="snav">
+    <a href="#s10" class="nbtn">&#8592; Previous</a>
+    <div class="snav-mid">
+      <span class="counter">Slide 11 of 13</span>
+      <a href="#ov" class="ov-btn">&#8801; All Slides</a>
+    </div>
+    <a href="#s12" class="nbtn gold">Next &#8594;</a>
+  </div>
+</div>
+
+<!-- ══ SLIDE 12 — Takeaways ══ -->
+<div id="s12" class="slide">
+  <div class="s-head">
+    <div class="pbar" style="width:92%"></div>
+    <span class="badge">12 of 13</span>
     <h1>What You'll Take Away Today</h1>
   </div>
   <div class="s-body">
@@ -692,42 +814,43 @@ html:has(#ov:target) .slide { display:none; }
         <div class="t-icon">&#128187;</div>
         <div>
           <h4>Technology Integration Ideas</h4>
-          <p>Realistic tech solutions for small districts — modern without overwhelming staff</p>
+          <p>Realistic tech solutions for small Texas districts — modern without overwhelming staff</p>
         </div>
       </div>
     </div>
   </div>
   <div class="snav">
-    <a href="#s9" class="nbtn">&#8592; Previous</a>
+    <a href="#s11" class="nbtn">&#8592; Previous</a>
     <div class="snav-mid">
-      <span class="counter">Slide 10 of 11</span>
+      <span class="counter">Slide 12 of 13</span>
       <a href="#ov" class="ov-btn">&#8801; All Slides</a>
     </div>
-    <a href="#s11" class="nbtn gold">Next &#8594;</a>
+    <a href="#s13" class="nbtn gold">Next &#8594;</a>
   </div>
 </div>
 
-<!-- ══ SLIDE 11 — Closing ══ -->
-<div id="s11" class="slide slide-closing">
+<!-- ══ SLIDE 13 — Closing ══ -->
+<div id="s13" class="slide slide-closing">
   <div class="s-head">
     <div class="pbar" style="width:100%"></div>
-    <span class="badge">11 of 11</span>
+    <span class="badge">13 of 13</span>
     <h1>Closing</h1>
   </div>
   <div class="s-body">
-    <div class="c-quote">"Clarity creates confidence.<br>Confidence creates stability."</div>
+    <div class="c-quote">"Investing in the future of rural Texas starts with a plan you can trust."</div>
     <div class="pillars">
       <div class="pillar">&#127891; Student Opportunities</div>
       <div class="pillar">&#128104;&#8205;&#127979; Staff Stability</div>
       <div class="pillar">&#127960;&#65039; Community Trust</div>
       <div class="pillar">&#128200; Long-Term Sustainability</div>
+      <div class="pillar">&#127807; Rural Economic Vitality</div>
     </div>
-    <div class="c-sub">The EAR Budget Notebook helps rural districts move from managing crises to leading with purpose — one clear decision at a time.</div>
+    <div class="c-sub">The EAR Budget Notebook helps rural Texas districts move from managing crises to leading with purpose — strengthening schools, communities, and the future of rural Texas.</div>
   </div>
   <div class="snav">
-    <a href="#s10" class="nbtn">&#8592; Previous</a>
+    <a href="#s12" class="nbtn">&#8592; Previous</a>
     <div class="snav-mid">
-      <span class="counter">Slide 11 of 11</span>
+      <span class="counter">Slide 13 of 13</span>
       <a href="#ov" class="ov-btn">&#8801; All Slides</a>
     </div>
     <span class="nbtn dim">Finish</span>
